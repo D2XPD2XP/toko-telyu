@@ -60,11 +60,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-  - assets/logo_only.png
-  - assets/logo_toktel.png
-  - assets/logofixbismillah.png
-  - assets/inifix.png
-  - assets/muak.png
+  - assets/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -94,13 +90,13 @@ flutter:
 
 flutter_native_splash:
   color: "#FFFFFF"       
-  image: assets/muak.png
+  image: assets/muak3.png
   android_gravity: center
   ios_content_mode: center
   branding_mode: center
   icon_background_color: null
   android_12:
     icon_background_color: null
-    image: assets/muak.png
+    image: assets/muak3.png
     color: "#FFFFFF"   
     branding_mode: center  
