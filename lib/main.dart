@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toko_telyu/screens/authentication.dart';
 import 'package:toko_telyu/screens/homepage.dart';
 
 void main() {
@@ -11,7 +12,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const Homepage(),
+      home: const Authentication(),
     );
   }
 }
