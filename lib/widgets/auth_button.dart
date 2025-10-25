@@ -4,20 +4,17 @@ import 'package:toko_telyu/screens/login.dart';
 import 'package:toko_telyu/screens/signup.dart';
 
 class AuthButton extends StatelessWidget {
-  const AuthButton({super.key, required this.text, required this.type});
+  const AuthButton({super.key, required this.text, required this.type, required this.onTap});
 
   final String type;
   final String text;
+  final void Function() onTap;
 
   @override
   Widget build(BuildContext context) {
     if (type == "login") {
       return InkWell(
-        onTap: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (ctx) => LoginPage()));
-        },
+        onTap: onTap,
         borderRadius: BorderRadius.circular(50),
         child: Container(
           width: 262,
@@ -46,11 +43,7 @@ class AuthButton extends StatelessWidget {
       );
     }
     return InkWell(
-      onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (ctx) => SignupPage()));
-      },
+      onTap: onTap,
       borderRadius: BorderRadius.circular(50),
       child: Container(
         width: 262,
