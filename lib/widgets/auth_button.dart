@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:toko_telyu/screens/login.dart';
-import 'package:toko_telyu/screens/signup.dart';
 
 class AuthButton extends StatelessWidget {
   const AuthButton({super.key, required this.text, required this.type, required this.onTap});
