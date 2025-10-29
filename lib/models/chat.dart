@@ -1,3 +1,6 @@
+import 'package:toko_telyu/enums/role.dart';
+import 'package:toko_telyu/models/user.dart';
+
 class Chat {
   String _chatId;
   User _customer;

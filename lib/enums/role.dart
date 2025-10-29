@@ -1,0 +1,1 @@
+enum RoleEnum { USER, ADMIN }
