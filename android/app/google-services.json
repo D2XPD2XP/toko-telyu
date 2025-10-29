@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "902133404787",
+    "project_id": "toko-telyu-ddcef",
+    "storage_bucket": "toko-telyu-ddcef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:902133404787:android:0f4cfccc5de4c713444606",
+        "android_client_info": {
+          "package_name": "com.example.toko_telyu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAB-U2LeHvZHzw1eJEZ9yQ9nWDeOP8KSnY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
