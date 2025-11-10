@@ -1,28 +1,22 @@
-import 'User.dart';
-import 'CartItem.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Cart {
   String? _cartId;
-  User? _user;
-  List<CartItem>? _items;
+  String? _userId;
 
-  Cart(this._cartId, this._user, this._items);
+  Cart(this._cartId, this._userId);
 
-  // Getters
-  String? getCartId() => _cartId;
-  User? getUser() => _user;
-  List<CartItem>? getItems() => _items;
-
-  // Setters
-  void setCartId(String? cartId) {
-    _cartId = cartId;
+  factory Cart.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return Cart(doc.id, data['userId']);
   }
 
-  void setUser(User? user) {
-    _user = user;
+  Map<String, dynamic> toFirestore() {
+    return {'userId': _userId};
   }
 
-  void setItems(List<CartItem>? items) {
-    _items = items;
-  }
+  String? get cartId => _cartId;
+  String? get userId => _userId;
+  void setCartId(String? id) => _cartId = id;
+  void setUserId(String? id) => _userId = id;
 }

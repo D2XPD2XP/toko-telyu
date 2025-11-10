@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/services/auth_services.dart';
 import 'package:toko_telyu/widgets/auth_button.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,13 +15,21 @@ class LoginPage extends StatefulWidget {
 class _LoginPage extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthServices _authServices = AuthServices();
+  bool _obscure = true;
 
-  void _submitData() {}
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      backgroundColor: Colors.white,
+      appBar: AppBar(backgroundColor: Colors.white),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -57,6 +66,7 @@ class _LoginPage extends State<LoginPage> {
                       SizedBox(height: 40),
                       TextField(
                         controller: _passwordController,
+                        obscureText: _obscure,
                         decoration: InputDecoration(
                           label: Text(
                             'Password',
@@ -65,14 +75,34 @@ class _LoginPage extends State<LoginPage> {
                               fontSize: 20,
                             ),
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(
+                              () => _obscure = !_obscure,
+                            ),
+                            icon: Icon(
+                              _obscure == false
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              SizedBox(height: 40,),
-              AuthButton(text: "Login", type: "login", onTap: _submitData,),
+              SizedBox(height: 40),
+              AuthButton(
+                text: "Login",
+                type: "login",
+                onTap: () {
+                  _authServices.login(
+                    context,
+                    _emailController,
+                    _passwordController,
+                  );
+                },
+              ),
             ],
           ),
         ),

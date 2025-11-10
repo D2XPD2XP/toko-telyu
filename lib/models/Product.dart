@@ -1,6 +1,7 @@
-import 'ProductCategory.dart';
-import 'ProductVariant.dart';
-import 'ProductImage.dart';
+import 'package:toko_telyu/models/product_category.dart';
+import 'package:toko_telyu/models/product_image.dart';
+import 'package:toko_telyu/models/product_variant.dart';
+
 
 class Product {
   String? _productId;

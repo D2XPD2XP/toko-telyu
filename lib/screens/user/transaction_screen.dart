@@ -12,7 +12,6 @@ class TransactionScreen extends StatefulWidget {
 }
 
 class _TransactionScreenState extends State<TransactionScreen> {
-  // Variabel untuk menyimpan nilai dropdown (bisa dikembangkan nanti)
   String? _selectedProduct = "All Products";
   String? _selectedDate = "All Dates";
 
@@ -20,7 +19,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100], // Background abu-abu muda
-      // ====== APP BAR KUSTOM ======
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.0), // Tinggi AppBar
         child: AppBar(
@@ -50,14 +48,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
         ),
       ),
 
-      // ====== BODY ======
       body: ListView(
         children: [
-          // --- Filter Bar ---
           _buildFilterBar(),
 
-          // --- Daftar Transaksi ---
-          // Di sini kita gunakan data dummy/contoh
           TransactionCard(
             status: TransactionStatus.notForDelivery,
             date: "04 October 2025",
@@ -123,13 +117,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
             },
           ),
 
-          SizedBox(height: 20), // Spasi di bagian bawah
+          SizedBox(height: 20), 
         ],
       ),
     );
   }
 
-  // --- Widget untuk Search Bar ---
   Widget _buildSearchBar() {
     return Container(
       height: 40,
@@ -150,7 +143,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
-  // --- Widget untuk Filter Bar ---
   Widget _buildFilterBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -172,7 +164,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
-  // --- Widget kustom untuk Dropdown ---
   Widget _buildDropdownButton(String? value, List<String> items) {
     return Expanded(
       child: Container(
@@ -191,14 +182,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
             style: TextStyle(
               color: Colors.black87,
               fontSize: 14,
-              fontFamily: 'Poppins', // Pastikan font family sesuai
+              fontFamily: 'Poppins',
               fontWeight: FontWeight.w500,
             ),
             items: items.map((String item) {
               return DropdownMenuItem<String>(value: item, child: Text(item));
             }).toList(),
             onChanged: (String? newValue) {
-              // Logika untuk ganti filter
               setState(() {
                 if (items.contains("All Products")) {
                   _selectedProduct = newValue;

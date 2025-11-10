@@ -1,4 +1,4 @@
-import 'Product.dart';
+import 'package:toko_telyu/models/product.dart';
 
 class ProductImage {
   String? _imageUrl;
