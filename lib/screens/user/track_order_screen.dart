@@ -5,9 +5,7 @@ class TrackOrderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Warna merah utama Anda
     final Color mainColor = Color(0xFFED1E28);
-    // Warna abu-abu untuk item yang tidak aktif
     final Color greyColor = Colors.grey.shade400;
 
     return Scaffold(
@@ -19,7 +17,7 @@ class TrackOrderScreen extends StatelessWidget {
         ),
 
         backgroundColor: Colors.white,
-        elevation: 1, // Sedikit bayangan
+        elevation: 1,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
@@ -27,41 +25,35 @@ class TrackOrderScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          // --- BAGIAN 1: STEPPER HORIZONTAL ---
           Container(
             padding: const EdgeInsets.symmetric(vertical: 30),
             child: Row(
               children: [
-                // Step 1: Packed (Selesai)
                 _buildStepperStep(
-                  icon: Icons.inventory_2_outlined, // <-- IKON BARU
+                  icon: Icons.inventory_2_outlined,
                   label: "Packed",
                   isCompleted: true,
                   isActive: false,
                   mainColor: mainColor,
                   greyColor: greyColor,
                 ),
-                // Connector 1 (Selesai)
                 _buildStepperConnector(isCompleted: true, mainColor: mainColor),
 
-                // Step 2: Shipped (Aktif)
                 _buildStepperStep(
-                  icon: Icons.local_shipping, // <-- IKON BARU
+                  icon: Icons.local_shipping, 
                   label: "Shipped",
-                  isCompleted: false, // Belum selesai, tapi aktif
+                  isCompleted: false,
                   isActive: true,
                   mainColor: mainColor,
                   greyColor: greyColor,
                 ),
-                // Connector 2 (Belum Selesai)
                 _buildStepperConnector(
                   isCompleted: false,
                   mainColor: mainColor,
                 ),
 
-                // Step 3: Delivered (Belum Selesai)
                 _buildStepperStep(
-                  icon: Icons.inventory_outlined, // <-- IKON BARU
+                  icon: Icons.inventory_outlined, 
                   label: "Delivered",
                   isCompleted: false,
                   isActive: false,
@@ -72,10 +64,8 @@ class TrackOrderScreen extends StatelessWidget {
             ),
           ),
 
-          // Garis pemisah
           Divider(thickness: 6, color: Colors.grey[100]),
 
-          // --- BAGIAN 2: JUDUL STATUS ---
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -94,8 +84,7 @@ class TrackOrderScreen extends StatelessWidget {
             ),
           ),
 
-          // --- BAGIAN 3: TIMELINE VERTIKAL ---
-          // Data dummy untuk timeline
+
           _buildTimelineItem(
             date: "Monday, 04 October 2025",
             time: "11:48 WIB",
@@ -103,7 +92,7 @@ class TrackOrderScreen extends StatelessWidget {
                 "Paket sedang disiapkan dan akan diserahkan kepada ekpedisi untuk dikirimkan.",
             courier: "Kurir: JNE",
             isLast: false,
-            isActive: true, // Item paling atas (aktif)
+            isActive: true, 
             mainColor: mainColor,
             greyColor: greyColor,
           ),
@@ -114,7 +103,7 @@ class TrackOrderScreen extends StatelessWidget {
                 "Paket sedang disiapkan dan akan diserahkan kepada ekpedisi untuk dikirimkan.",
             courier: "Kurir: JNE",
             isLast: false,
-            isActive: false, // Item lama
+            isActive: false, 
             mainColor: mainColor,
             greyColor: greyColor,
           ),
@@ -135,7 +124,7 @@ class TrackOrderScreen extends StatelessWidget {
             description:
                 "Paket sedang disiapkan dan akan diserahkan kepada ekpedisi untuk dikirimkan.",
             courier: "Kurir: JNE",
-            isLast: true, // Item paling bawah
+            isLast: true, 
             isActive: false,
             mainColor: mainColor,
             greyColor: greyColor,
@@ -191,8 +180,7 @@ class TrackOrderScreen extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12), // Jarak antara ikon dan teks
-          // Teks Label
+          SizedBox(height: 12), 
           Text(
             label,
             style: TextStyle(color: textColor, fontWeight: textWeight),
@@ -202,7 +190,6 @@ class TrackOrderScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BANTU BARU UNTUK LINGKARAN STATUS ---
   Widget _buildStatusCircle({
     required bool isCompleted,
     required bool isActive,
@@ -210,7 +197,6 @@ class TrackOrderScreen extends StatelessWidget {
     required Color greyColor,
   }) {
     if (isCompleted) {
-      // Lingkaran centang merah
       return Container(
         padding: EdgeInsets.all(2),
         decoration: BoxDecoration(
@@ -222,7 +208,6 @@ class TrackOrderScreen extends StatelessWidget {
       );
     }
     if (isActive) {
-      // Lingkaran titik merah
       return Container(
         padding: EdgeInsets.all(2),
         decoration: BoxDecoration(
@@ -233,7 +218,6 @@ class TrackOrderScreen extends StatelessWidget {
         child: Icon(Icons.circle, size: 8, color: Colors.white),
       );
     }
-    // Lingkaran abu-abu
     return Container(
       width: 14,
       height: 14,
@@ -245,14 +229,14 @@ class TrackOrderScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BANTU UNTUK GARIS KONEKTOR ---
+
   Widget _buildStepperConnector({
     required bool isCompleted,
     required Color mainColor,
   }) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 25.0), // Agar sejajar dgn ikon
+        padding: const EdgeInsets.only(bottom: 25.0), 
         child: Divider(
           color: isCompleted ? mainColor : Colors.grey.shade300,
           thickness: 2,
@@ -261,7 +245,6 @@ class TrackOrderScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BANTU UNTUK TIMELINE VERTIKAL ---
   Widget _buildTimelineItem({
     required String date,
     required String time,
@@ -281,36 +264,31 @@ class TrackOrderScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bagian Kiri: Ikon dan Garis
           Container(
-            width: 60, // Lebar untuk perataan
+            width: 60,
             child: Column(
               children: [
-                // Ikon
                 Container(
                   padding: EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.white, // Agar menutupi garis
+                    color: Colors.white,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(iconData, color: iconColor, size: 24),
                 ),
 
-                // Garis (jika bukan item terakhir)
                 if (!isLast)
                   Expanded(child: Container(width: 2, color: greyColor)),
               ],
             ),
           ),
 
-          // Bagian Kanan: Teks
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 24.0, right: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Baris Tanggal dan Waktu
                   Row(
                     children: [
                       Text(
@@ -331,7 +309,6 @@ class TrackOrderScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 8),
-                  // Deskripsi
                   Text(
                     description,
                     style: TextStyle(
@@ -340,7 +317,6 @@ class TrackOrderScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 4),
-                  // Kurir
                   Text(
                     courier,
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 14),

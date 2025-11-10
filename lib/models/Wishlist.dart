@@ -1,28 +1,23 @@
-import 'User.dart';
-import 'WishlistItem.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Wishlist {
   String? _wishlistId;
-  User? _customer;
-  List<WishlistItem>? _items;
+  String? _userId;
 
-  Wishlist(this._wishlistId, this._customer, this._items);
+  Wishlist(this._wishlistId, this._userId);
 
-  // Getters
-  String? getWishlistId() => _wishlistId;
-  User? getCustomer() => _customer;
-  List<WishlistItem>? getItems() => _items;
-
-  // Setters
-  void setWishlistId(String? wishlistId) {
-    _wishlistId = wishlistId;
+  factory Wishlist.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return Wishlist(doc.id, data['userId']);
   }
 
-  void setCustomer(User? customer) {
-    _customer = customer;
+  Map<String, dynamic> toFirestore() {
+    return {'userId': _userId};
   }
 
-  void setItems(List<WishlistItem>? items) {
-    _items = items;
-  }
+  String? get wishlistId => _wishlistId;
+  String? get userId => _userId;
+  void setWishlistId(String? id) => _wishlistId = id;
+  void setUserId(String? id) => _userId = id;
 }
+

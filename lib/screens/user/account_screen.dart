@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:toko_telyu/services/auth_services.dart';
+import 'package:toko_telyu/services/user_services.dart';
 // Impor widget yang baru saja kita buat
 import '../../widgets/profile_menu_item.dart';
 import 'package:toko_telyu/screens/user/edit_profile_screen.dart';
@@ -11,57 +13,49 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  int _selectedIndex = 3; // 3 = index untuk "Account"
+  final AuthServices _authServices = AuthServices();
+  int _selectedIndex = 3; 
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    // Tambahkan navigasi di sini jika perlu
-    // cth: if (index == 0) Navigator.pushNamed(context, '/home');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Warna background abu-abu muda
-      // ====== APP BAR ======
+      backgroundColor: Colors.grey[100], 
       appBar: AppBar(
         title: Text(
           "My Activity",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.grey[100], // Samakan dengan background body
-        elevation: 0, // Hilangkan bayangan
+        backgroundColor: Colors.grey[100], 
+        elevation: 0, 
         centerTitle: true,
       ),
 
-      // ====== BODY ======
       body: ListView(
         children: [
           SizedBox(height: 20),
 
-          // --- Kartu Profil Merah ---
           Container(
             height: 155,
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Color(0xFFED1E28), // Warna merah (sesuaikan dari Figma)
+              color: Color(0xFFED1E28), 
               borderRadius: BorderRadius.circular(15),
             ),
             child: Row(
               children: [
-                // Foto Profil
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.white60,
                   child: Icon(Icons.person, size: 40, color: Colors.white),
-                  // Jika punya gambar:
-                  // backgroundImage: NetworkImage('URL_GAMBAR_ANDA'),
                 ),
                 SizedBox(width: 23),
-                // Nama dan Email
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -95,12 +89,10 @@ class _AccountScreenState extends State<AccountScreen> {
 
           SizedBox(height: 30),
 
-          // --- Menu Item (Menggunakan Widget Kustom) ---
           ProfileMenuItem(
             title: "Edit Profile",
             icon: Icons.person_outline,
             onTap: () {
-              // INI ADALAH KODE YANG MEMBUATNYA MUNCUL
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -112,15 +104,14 @@ class _AccountScreenState extends State<AccountScreen> {
 
           ProfileMenuItem(
             title: "Log Out",
-            icon: Icons.logout, // Ikon dari Figma (sesuaikan)
+            icon: Icons.logout,
             onTap: () {
-              print("Log Out diklik!");
-              // Logika untuk Log Out
+              _authServices.logout(context);
             },
-            textColor: Color(0xFFED1E28), // Teks jadi merah
+            textColor: Color(0xFFED1E28),
             iconColor: Color(
               0xFFED1E28,
-            ), // Ikon (leading & trailing) jadi merah
+            ), 
           ),
         ],
       ),

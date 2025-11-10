@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// Ganti nama_project_anda dengan nama project Anda (toko_telyu)
 import 'package:toko_telyu/widgets/edit_profile_row.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -10,7 +9,6 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  // Helper widget untuk membuat judul seksi ("Profile Info", "Personal Info")
   Widget _buildSectionHeader(String title) {
     return Container(
       width: double.infinity,
@@ -29,18 +27,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Ikon panah ke kanan yang akan sering kita pakai
     final arrowIcon = Icon(
       Icons.arrow_forward_ios,
       size: 16,
       color: Colors.grey,
     );
-    // Ikon copy
     final copyIcon = Icon(Icons.copy_outlined, size: 20, color: Colors.grey);
 
     return Scaffold(
       backgroundColor: Colors.white, // Background utama
-      // ====== APP BAR ======
       appBar: AppBar(
         title: Text("Edit Profile"),
         backgroundColor: Colors.white,
@@ -56,10 +51,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
 
-      // ====== BODY ======
       body: ListView(
         children: [
-          // --- Bagian Foto Profil ---
           SizedBox(height: 30),
           Center(
             child: CircleAvatar(
@@ -85,7 +78,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           SizedBox(height: 20),
 
-          // --- Seksi Profile Info ---
           _buildSectionHeader("Profile Info"),
 
           EditProfileRow(
@@ -100,14 +92,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           EditProfileRow(
             label: "Username",
             value: "Buat Username yang unik",
-            valueColor: Colors.grey, // Teks value jadi abu-abu
+            valueColor: Colors.grey,
             trailingIcon: arrowIcon,
             onTap: () {
               print("Pindah ke halaman ganti username");
             },
           ),
 
-          // --- Seksi Personal Info ---
           _buildSectionHeader("Personal Info"),
 
           EditProfileRow(

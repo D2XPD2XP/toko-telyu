@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/services/auth_services.dart';
 import 'package:toko_telyu/widgets/auth_button.dart';
 
 class SignupPage extends StatefulWidget {
@@ -16,15 +17,15 @@ class _SignupPage extends State<SignupPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-
-  void _submitData() {
-    Navigator.pop(context);
-  }
+  final AuthServices _authServices = AuthServices(); 
+  bool _obscure1 = true;
+  bool _obscure2 = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      backgroundColor: Colors.white,
+      appBar: AppBar(backgroundColor: Colors.white,),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -72,6 +73,7 @@ class _SignupPage extends State<SignupPage> {
                       ),
                       SizedBox(height: 20),
                       TextField(
+                        obscureText: true,
                         controller: _passwordController,
                         decoration: InputDecoration(
                           label: Text(
@@ -81,10 +83,21 @@ class _SignupPage extends State<SignupPage> {
                               fontSize: 20,
                             ),
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(
+                              () => _obscure1 = !_obscure1,
+                            ),
+                            icon: Icon(
+                              _obscure1 == false
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(height: 20),
                       TextField(
+                        obscureText: true,
                         controller: _confirmController,
                         decoration: InputDecoration(
                           label: Text(
@@ -94,6 +107,16 @@ class _SignupPage extends State<SignupPage> {
                               fontSize: 20,
                             ),
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(
+                              () => _obscure2 = !_obscure2,
+                            ),
+                            icon: Icon(
+                              _obscure2 == false
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -101,7 +124,7 @@ class _SignupPage extends State<SignupPage> {
                 ),
               ),
               SizedBox(height: 40,),
-              AuthButton(text: "Sign Up", type: "login", onTap: _submitData,),
+              AuthButton(text: "Sign Up", type: "login", onTap: () {_authServices.register(context, _usernameController, _emailController, _passwordController, _confirmController);},),
             ],
           ),
         ),

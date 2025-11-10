@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class OrderDetailScreen extends StatelessWidget {
-  // Anda bisa tambahkan parameter 'orderId' di sini nanti
   const OrderDetailScreen({Key? key}) : super(key: key);
 
   @override
