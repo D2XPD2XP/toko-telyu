@@ -17,15 +17,24 @@ class _SignupPage extends State<SignupPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-  final AuthServices _authServices = AuthServices(); 
+  final AuthServices _authServices = AuthServices();
   bool _obscure1 = true;
   bool _obscure2 = true;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.white,),
+      appBar: AppBar(backgroundColor: Colors.white),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -73,7 +82,7 @@ class _SignupPage extends State<SignupPage> {
                       ),
                       SizedBox(height: 20),
                       TextField(
-                        obscureText: true,
+                        obscureText: _obscure1,
                         controller: _passwordController,
                         decoration: InputDecoration(
                           label: Text(
@@ -84,9 +93,8 @@ class _SignupPage extends State<SignupPage> {
                             ),
                           ),
                           suffixIcon: IconButton(
-                            onPressed: () => setState(
-                              () => _obscure1 = !_obscure1,
-                            ),
+                            onPressed: () =>
+                                setState(() => _obscure1 = !_obscure1),
                             icon: Icon(
                               _obscure1 == false
                                   ? Icons.visibility_off
@@ -97,7 +105,7 @@ class _SignupPage extends State<SignupPage> {
                       ),
                       SizedBox(height: 20),
                       TextField(
-                        obscureText: true,
+                        obscureText: _obscure2,
                         controller: _confirmController,
                         decoration: InputDecoration(
                           label: Text(
@@ -108,9 +116,8 @@ class _SignupPage extends State<SignupPage> {
                             ),
                           ),
                           suffixIcon: IconButton(
-                            onPressed: () => setState(
-                              () => _obscure2 = !_obscure2,
-                            ),
+                            onPressed: () =>
+                                setState(() => _obscure2 = !_obscure2),
                             icon: Icon(
                               _obscure2 == false
                                   ? Icons.visibility_off
@@ -123,8 +130,20 @@ class _SignupPage extends State<SignupPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 40,),
-              AuthButton(text: "Sign Up", type: "login", onTap: () {_authServices.register(context, _usernameController, _emailController, _passwordController, _confirmController);},),
+              SizedBox(height: 40),
+              AuthButton(
+                text: "Sign Up",
+                type: "login",
+                onTap: () async {
+                  await _authServices.register(
+                    context,
+                    _usernameController,
+                    _emailController,
+                    _passwordController,
+                    _confirmController,
+                  );
+                },
+              ),
             ],
           ),
         ),

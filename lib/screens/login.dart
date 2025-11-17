@@ -76,9 +76,8 @@ class _LoginPage extends State<LoginPage> {
                             ),
                           ),
                           suffixIcon: IconButton(
-                            onPressed: () => setState(
-                              () => _obscure = !_obscure,
-                            ),
+                            onPressed: () =>
+                                setState(() => _obscure = !_obscure),
                             icon: Icon(
                               _obscure == false
                                   ? Icons.visibility_off
@@ -95,8 +94,8 @@ class _LoginPage extends State<LoginPage> {
               AuthButton(
                 text: "Login",
                 type: "login",
-                onTap: () {
-                  _authServices.login(
+                onTap: () async {
+                  await _authServices.login(
                     context,
                     _emailController,
                     _passwordController,

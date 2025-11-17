@@ -44,12 +44,13 @@ class AuthServices {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => MainScreen()),
-        (route) => false
+        (route) => false,
       );
     } catch (e) {
       return showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text(
             "Incorrect Password!",
             style: TextStyle(
@@ -71,6 +72,9 @@ class AuthServices {
                 style: ButtonStyle(
                   foregroundColor: WidgetStateProperty.all(
                     const Color(0xFFED1E28),
+                  ),
+                  backgroundColor: WidgetStateProperty.all(
+                    const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ),
                 child: Text("OK"),
@@ -108,6 +112,7 @@ class AuthServices {
       return showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text(
             "Invalid Input",
             style: TextStyle(
@@ -129,6 +134,9 @@ class AuthServices {
                 style: ButtonStyle(
                   foregroundColor: WidgetStateProperty.all(
                     const Color(0xFFED1E28),
+                  ),
+                  backgroundColor: WidgetStateProperty.all(
+                    const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ),
                 child: Text("OK"),

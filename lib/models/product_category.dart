@@ -1,25 +1,41 @@
+import 'package:uuid/uuid.dart';
+
 class ProductCategory {
   String _categoryId;
   String _categoryName;
   bool _isFittable;
 
-  ProductCategory(this._categoryId, this._categoryName, this._isFittable);
+  ProductCategory({
+    String? categoryId,
+    required String categoryName,
+    required bool isFittable,
+  })  : _categoryId = categoryId ?? const Uuid().v4(),
+        _categoryName = categoryName,
+        _isFittable = isFittable;
 
-  // Getters
-  String getCategoryId() => _categoryId;
-  String getCategoryName() => _categoryName;
-  bool isFittable() => _isFittable;
-
-  // Setters
-  void setCategoryId(String categoryId) {
-    _categoryId = categoryId;
+  factory ProductCategory.fromMap(Map<String, dynamic> map, String id) {
+    return ProductCategory(
+      categoryId: id,
+      categoryName: map['categoryName'] ?? '',
+      isFittable: map['isFittable'] ?? false,
+    );
   }
 
-  void setCategoryName(String categoryName) {
-    _categoryName = categoryName;
+  Map<String, dynamic> toMap() {
+    return {
+      'categoryId': _categoryId,
+      'categoryName': _categoryName,
+      'isFittable': _isFittable,
+    };
   }
 
-  void setFittable(bool isFittable) {
-    _isFittable = isFittable;
-  }
+  String get categoryId => _categoryId;
+  String get categoryName => _categoryName;
+  bool get isFittable => _isFittable;
+
+  set categoryId(String value) => _categoryId = value;
+  set categoryName(String value) => _categoryName = value;
+  set isFittable(bool value) => _isFittable = value;
 }
+
+

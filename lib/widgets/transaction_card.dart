@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum TransactionStatus { notForDelivery, completed }
+enum TransactionStatus { outForDelivery, completed }
 
 class TransactionCard extends StatelessWidget {
   final TransactionStatus status;
@@ -33,9 +33,9 @@ class TransactionCard extends StatelessWidget {
     String buttonText;
     VoidCallback? buttonAction;
 
-    if (status == TransactionStatus.notForDelivery) {
-      statusColor = Colors.orange.shade700;
-      statusText = "Not For Delivery";
+    if (status == TransactionStatus.outForDelivery) {
+      statusColor = const Color.fromARGB(255, 235, 212, 5);
+      statusText = "Out For Delivery";
       buttonText = "Track Order";
       buttonAction = onTrackOrder;
     } else {
@@ -113,7 +113,7 @@ class TransactionCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.2),
+                      color: statusColor,
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
@@ -121,7 +121,7 @@ class TransactionCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: statusColor,
+                        color: Colors.white,
                       ),
                     ),
                   ),

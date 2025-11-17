@@ -53,7 +53,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
           _buildFilterBar(),
 
           TransactionCard(
-            status: TransactionStatus.notForDelivery,
+            status: TransactionStatus.outForDelivery,
             date: "04 October 2025",
             productImage: "assets/seragam_merah_telkom.png",
             productName: "Seragam Telkom - Merah",
@@ -133,11 +133,11 @@ class _TransactionScreenState extends State<TransactionScreen> {
       ),
       child: TextField(
         decoration: InputDecoration(
-          hintText: "SEARCH BAR",
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+          hintText: "SEARCH TRANSACTION",
+          hintStyle: TextStyle(color: Colors.black, fontSize: 10),
+          prefixIcon: Icon(Icons.search, size: 20),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 10),
+          contentPadding: EdgeInsets.symmetric(vertical: 2),
         ),
       ),
     );

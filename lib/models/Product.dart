@@ -1,69 +1,66 @@
-import 'package:toko_telyu/models/product_category.dart';
-import 'package:toko_telyu/models/product_image.dart';
-import 'package:toko_telyu/models/product_variant.dart';
-
+import 'package:uuid/uuid.dart';
+import 'product_category.dart';
 
 class Product {
-  String? _productId;
-  String? _productName;
-  double? _price;
-  int? _stock;
-  String? _description;
-  ProductCategory? _category;
-  List<ProductVariant>? _variants;
-  List<ProductImage>? _images;
+  String _productId;
+  String _productName;
+  double _price;
+  int _stock;
+  String _description;
+  ProductCategory _category;
 
-  Product(
-    this._productId,
-    this._productName,
-    this._price,
-    this._stock,
-    this._description,
-    this._category,
-    this._variants,
-    this._images,
-  );
+  Product({
+    String? productId,
+    required String productName,
+    required double price,
+    required int stock,
+    required String description,
+    required ProductCategory category,
+  })  : _productId = productId ?? const Uuid().v4(),
+        _productName = productName,
+        _price = price,
+        _stock = stock,
+        _description = description,
+        _category = category;
 
-  // Getters
-  String? getProductId() => _productId;
-  String? getProductName() => _productName;
-  double? getPrice() => _price;
-  int? getStock() => _stock;
-  String? getDescription() => _description;
-  ProductCategory? getCategory() => _category;
-  List<ProductVariant>? getVariants() => _variants;
-  List<ProductImage>? getImages() => _images;
-
-  // Setters
-  void setProductId(String? productId) {
-    _productId = productId;
+  factory Product.fromMap(Map<String, dynamic> map, String id) {
+    return Product(
+      productId: id,
+      productName: map['productName'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      stock: (map['stock'] ?? 0).toInt(),
+      description: map['description'] ?? '',
+      category: ProductCategory.fromMap(
+        map['category'] ?? {},
+        map['category']?['categoryId'] ?? '',
+      ),
+    );
   }
 
-  void setProductName(String? productName) {
-    _productName = productName;
+  Map<String, dynamic> toMap() {
+    return {
+      'productName': _productName,
+      'price': _price,
+      'stock': _stock,
+      'description': _description,
+      'category': _category.toMap(),
+    };
   }
 
-  void setPrice(double? price) {
-    _price = price;
-  }
+  String get productId => _productId;
+  String get productName => _productName;
+  double get price => _price;
+  int get stock => _stock;
+  String get description => _description;
+  ProductCategory get category => _category;
 
-  void setStock(int? stock) {
-    _stock = stock;
-  }
-
-  void setDescription(String? description) {
-    _description = description;
-  }
-
-  void setCategory(ProductCategory? category) {
-    _category = category;
-  }
-
-  void setVariants(List<ProductVariant>? variants) {
-    _variants = variants;
-  }
-
-  void setImages(List<ProductImage>? images) {
-    _images = images;
-  }
+  set productId(String value) => _productId = value;
+  set productName(String value) => _productName = value;
+  set price(double value) => _price = value;
+  set stock(int value) => _stock = value;
+  set description(String value) => _description = value;
+  set category(ProductCategory value) => _category = value;
 }
+
+
+

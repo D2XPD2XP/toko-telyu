@@ -32,3 +32,5 @@ class WishlistItem {
   void setProduct(Product? product) => _product = product;
   void setVariant(ProductVariant? variant) => _variant = variant;
 }
+
+
