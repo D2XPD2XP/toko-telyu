@@ -29,7 +29,14 @@ class ProfileMenuItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor, // Gunakan variabelnya
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor), // Gunakan variabelnya
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 2,
+            offset: Offset(0, 3),
+          ),
+        ], // Gunakan variabelnya
       ),
       child: ListTile(
         leading: Icon(icon, color: iconColor), // Gunakan variabelnya

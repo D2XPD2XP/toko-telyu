@@ -1,45 +1,47 @@
-import 'package:toko_telyu/models/product.dart';
+import 'package:uuid/uuid.dart';
 
 class ProductVariant {
-  String? _productVariantId;
-  String? _optionName;
-  int? _stock;
-  double? _additionalPrice;
-  Product? _product;
+  String _variantId;
+  String _optionName;
+  int _stock;
+  double _additionalPrice;
 
-  ProductVariant(
-    this._productVariantId,
-    this._optionName,
-    this._stock,
-    this._additionalPrice,
-    this._product,
-  );
+  ProductVariant({
+    String? variantId,
+    required String optionName,
+    required int stock,
+    required double additionalPrice,
+  })  : _variantId = variantId ?? const Uuid().v4(),
+        _optionName = optionName,
+        _stock = stock,
+        _additionalPrice = additionalPrice;
 
-  // Getters
-  String? getProductVariantId() => _productVariantId;
-  String? getOptionName() => _optionName;
-  int? getStock() => _stock;
-  double? getAdditionalPrice() => _additionalPrice;
-  Product? getProduct() => _product;
-
-  // Setters
-  void setProductVariantId(String? productVariantId) {
-    _productVariantId = productVariantId;
+  factory ProductVariant.fromMap(Map<String, dynamic> map, String id) {
+    return ProductVariant(
+      variantId: id,
+      optionName: map['optionName'] ?? '',
+      stock: (map['stock'] ?? 0).toInt(),
+      additionalPrice: (map['additionalPrice'] ?? 0).toDouble(),
+    );
   }
 
-  void setOptionName(String? optionName) {
-    _optionName = optionName;
+  Map<String, dynamic> toMap() {
+    return {
+      'variantId': _variantId,
+      'optionName': _optionName,
+      'stock': _stock,
+      'additionalPrice': _additionalPrice,
+    };
   }
 
-  void setStock(int? stock) {
-    _stock = stock;
-  }
+  String get variantId => _variantId;
+  String get optionName => _optionName;
+  int get stock => _stock;
+  double get additionalPrice => _additionalPrice;
 
-  void setAdditionalPrice(double? additionalPrice) {
-    _additionalPrice = additionalPrice;
-  }
-
-  void setProduct(Product? product) {
-    _product = product;
-  }
+  set variantId(String value) => _variantId = value;
+  set optionName(String value) => _optionName = value;
+  set stock(int value) => _stock = value;
+  set additionalPrice(double value) => _additionalPrice = value;
 }
+

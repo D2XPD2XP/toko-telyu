@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/services/auth_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
-// Impor widget yang baru saja kita buat
 import '../../widgets/profile_menu_item.dart';
 import 'package:toko_telyu/screens/user/edit_profile_screen.dart';
 
@@ -13,8 +14,13 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
+  final _secureStorage = FlutterSecureStorage();
   final AuthServices _authServices = AuthServices();
-  int _selectedIndex = 3; 
+  final UserService _userService = UserService();
+  String? userId;
+  User? user;
+
+  int _selectedIndex = 3;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -23,16 +29,32 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final storage = const FlutterSecureStorage();
+    userId = await storage.read(key: 'user_id');
+
+    if (userId != null) {
+      user = await _userService.getUser(userId!);
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], 
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
           "My Activity",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.grey[100], 
-        elevation: 0, 
+        backgroundColor: Colors.grey[100],
+        elevation: 0,
         centerTitle: true,
       ),
 
@@ -45,14 +67,21 @@ class _AccountScreenState extends State<AccountScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Color(0xFFED1E28), 
+              color: Color(0xFFED1E28),
               borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  blurRadius: 2,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: Colors.white60,
+                  backgroundColor: const Color.fromARGB(255, 180, 180, 180),
                   child: Icon(Icons.person, size: 40, color: Colors.white),
                 ),
                 SizedBox(width: 23),
@@ -61,7 +90,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   children: [
                     SizedBox(height: 15),
                     Text(
-                      "Aiman Ibnu",
+                      user!.name,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -78,7 +107,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       ),
                     ),
                     Text(
-                      "aimanibnu1@gmail.com",
+                      user!.email,
                       style: TextStyle(fontSize: 14, color: Colors.white),
                     ),
                   ],
@@ -109,9 +138,7 @@ class _AccountScreenState extends State<AccountScreen> {
               _authServices.logout(context);
             },
             textColor: Color(0xFFED1E28),
-            iconColor: Color(
-              0xFFED1E28,
-            ), 
+            iconColor: Color(0xFFED1E28),
           ),
         ],
       ),

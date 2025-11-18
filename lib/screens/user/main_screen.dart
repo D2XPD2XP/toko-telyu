@@ -2,14 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:toko_telyu/screens/user/account_screen.dart';
 import 'package:toko_telyu/screens/user/homepage.dart';
 import 'package:toko_telyu/screens/user/transaction_screen.dart';
-
-class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({Key? key}) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text("Halaman Favorites"));
-  }
-}
+import 'package:toko_telyu/screens/user/wishlist_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -39,17 +32,18 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _widgetOptions),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
+            icon: Icon(Icons.favorite_border),
             label: 'Favorites',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long),
             label: 'Transaction',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Account'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Color(0xFFE53935), 
