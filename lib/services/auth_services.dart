@@ -52,7 +52,7 @@ class AuthServices {
         builder: (ctx) => AlertDialog(
           backgroundColor: Colors.white,
           title: const Text(
-            "Incorrect Password!",
+            "Invalid Input!",
             style: TextStyle(
               color: Color(0xFFED1E28),
               fontWeight: FontWeight.bold,
@@ -114,7 +114,7 @@ class AuthServices {
         builder: (ctx) => AlertDialog(
           backgroundColor: Colors.white,
           title: const Text(
-            "Invalid Input",
+            "Invalid Input!",
             style: TextStyle(
               color: Color(0xFFED1E28),
               fontWeight: FontWeight.bold,

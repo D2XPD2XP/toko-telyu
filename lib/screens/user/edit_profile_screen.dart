@@ -1,14 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:toko_telyu/models/user.dart';
+import 'package:toko_telyu/screens/user/edit_address_screen.dart';
+import 'package:toko_telyu/screens/user/personal_info_screen.dart';
+import 'package:toko_telyu/services/user_services.dart';
+import 'package:toko_telyu/widgets/custom_dialog.dart';
 import 'package:toko_telyu/widgets/edit_profile_row.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({Key? key}) : super(key: key);
+  const EditProfileScreen({super.key});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  final UserService _userService = UserService();
+  String? userId;
+  User? user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final storage = const FlutterSecureStorage();
+    userId = await storage.read(key: 'user_id');
+
+    if (userId != null) {
+      user = await _userService.getUser(userId!);
+      setState(() {});
+    }
+  }
+
+  Future<void> _handleUsername(BuildContext context, String username) async {
+    if (username.isEmpty) {
+      return showDialog(
+        context: context,
+        builder: (ctx) => CustomDialog(
+          ctx: ctx,
+          message: 'Please make sure a valid username',
+        ),
+      );
+    }
+
+    Map<String, dynamic> data = {"username": username};
+    await _userService.updateUser(userId!, data);
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    setState(() {
+      _loadUser();
+    });
+  }
+
+  Future<void> _handlePnumber(BuildContext context, String number) async {
+    if (num.tryParse(number.trim()) == null || number.length < 11) {
+      return showDialog(
+        context: context,
+        builder: (ctx) => CustomDialog(
+          ctx: ctx,
+          message: 'Please make sure a valid phone number',
+        ),
+      );
+    }
+
+    Map<String, dynamic> data = {"pnumber": number};
+    await _userService.updateUser(userId!, data);
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    setState(() {
+      _loadUser();
+    });
+  }
+
+  Future<void> _handleAddress(
+    BuildContext context,
+    Map<String, dynamic> address,
+  ) async {
+    if ((address["province"]?.trim().isEmpty ?? true) ||
+        (address["city"]?.trim().isEmpty ?? true) ||
+        (address["district"]?.trim().isEmpty ?? true) ||
+        (address["postal_code"]?.trim().isEmpty ?? true) || 
+        (address["street"]?.trim().isEmpty ?? true)) {
+      return showDialog(
+        context: context,
+        builder: (ctx) =>
+            CustomDialog(ctx: ctx, message: 'Please make sure a valid address'),
+      );
+    }
+
+    Map<String, dynamic> data = {"address": address};
+    await _userService.updateUser(userId!, data);
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    setState(() {
+      _loadUser();
+    });
+  }
+
   Widget _buildSectionHeader(String title) {
     return Container(
       width: double.infinity,
@@ -81,78 +178,62 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _buildSectionHeader("Profile Info"),
 
           EditProfileRow(
-            label: "Name",
-            value: "Aiman Ibnu",
-            trailingIcon: arrowIcon,
-            onTap: () {
-              print("Pindah ke halaman ganti nama");
-            },
-          ),
-
-          EditProfileRow(
             label: "Username",
-            value: "Buat Username yang unik",
+            value: user!.name,
             valueColor: Colors.grey,
             trailingIcon: arrowIcon,
             onTap: () {
-              print("Pindah ke halaman ganti username");
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PersonalInfo(
+                    title: "Username",
+                    value: user!.name,
+                    onTap: _handleUsername,
+                  ),
+                ),
+              );
             },
           ),
 
           _buildSectionHeader("Personal Info"),
 
-          EditProfileRow(
-            label: "User ID",
-            value: "12345678",
-            trailingIcon: copyIcon, // Ikon copy
-            onTap: () {
-              print("User ID disalin!");
-              // Logika copy ke clipboard di sini
-            },
-          ),
-
-          EditProfileRow(
-            label: "E-mail",
-            value: "Aimanibnu1@gmail.com",
-            trailingIcon: arrowIcon,
-            onTap: () {
-              print("Pindah ke halaman ganti email");
-            },
-          ),
+          EditProfileRow(label: "E-mail", value: user!.email, onTap: () {}),
 
           EditProfileRow(
             label: "Phone Number",
-            value: "6282238222281",
+            value: user?.pnumber ?? " ",
             trailingIcon: arrowIcon,
             onTap: () {
-              print("Pindah ke halaman ganti no. HP");
-            },
-          ),
-
-          EditProfileRow(
-            label: "Gender",
-            value: "Pria",
-            trailingIcon: arrowIcon,
-            onTap: () {
-              print("Pindah ke halaman ganti gender");
-            },
-          ),
-
-          EditProfileRow(
-            label: "Date of Birth",
-            value: "05 Oktober 2004",
-            trailingIcon: arrowIcon,
-            onTap: () {
-              print("Pindah ke halaman ganti tgl lahir");
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PersonalInfo(
+                    title: "Phone Number",
+                    value: user?.pnumber,
+                    onTap: _handlePnumber,
+                  ),
+                ),
+              );
             },
           ),
 
           EditProfileRow(
             label: "Address",
-            value: "Permata Buah Batu Blok i",
+            value: user?.address != null
+                ? "${user?.address?['street'] ?? ''}, ${user?.address?['postal_code'] ?? ''}"
+                : " ",
             trailingIcon: arrowIcon,
             onTap: () {
-              print("Pindah ke halaman ganti alamat");
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditAddressScreen(
+                    value: user?.address,
+                    onTap: _handleAddress,
+                  ),
+                ),
+              );
             },
           ),
         ],

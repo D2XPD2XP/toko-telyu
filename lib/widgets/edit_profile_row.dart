@@ -4,8 +4,8 @@ class EditProfileRow extends StatelessWidget {
   final String label;
   final String value;
   final VoidCallback onTap;
-  final Widget? trailingIcon; // Ikon di paling kanan (bisa panah, copy, dll)
-  final Color? valueColor; // Untuk membuat teks "Buat Username" jadi abu-abu
+  final Widget? trailingIcon; 
+  final Color? valueColor; 
 
   const EditProfileRow({
     Key? key,
@@ -40,7 +40,6 @@ class EditProfileRow extends StatelessWidget {
             // Spacer
             Expanded(child: Container()),
 
-            // Value (cth: "Aiman Ibnu")
             Text(
               value,
               style: TextStyle(
@@ -54,7 +53,6 @@ class EditProfileRow extends StatelessWidget {
 
             SizedBox(width: 8),
 
-            // Ikon di paling kanan (jika ada)
             if (trailingIcon != null) trailingIcon!,
           ],
         ),
