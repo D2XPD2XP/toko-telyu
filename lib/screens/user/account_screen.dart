@@ -20,14 +20,6 @@ class _AccountScreenState extends State<AccountScreen> {
   String? userId;
   User? user;
 
-  int _selectedIndex = 3;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -121,13 +113,14 @@ class _AccountScreenState extends State<AccountScreen> {
           ProfileMenuItem(
             title: "Edit Profile",
             icon: Icons.person_outline,
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const EditProfileScreen(),
                 ),
               );
+              _loadUser();
             },
           ),
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:toko_telyu/models/Product.dart';
 
@@ -40,9 +41,28 @@ class ProductCard extends StatelessWidget {
                 ),
               ],
             ),
-            Text('Ini Kategori',),
-            Text('Ini Nama Prduk'),
-            Text('Ini Harga'),
+            Text(
+              'Apparel',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            Text(
+              'Seragam Telkom - Merah',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 5,),
+            Text(
+              'Rp150.000,00',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),

@@ -80,7 +80,7 @@ class _Homepage extends State<Homepage> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 25,
                 crossAxisSpacing: 25,
-                childAspectRatio: 2 / 2.75,
+                childAspectRatio: 2 / 2.65,
               ),
               delegate: SliverChildListDelegate([ProductCard(), ProductCard(), ProductCard(), ProductCard(), ProductCard(), ProductCard()]),
             ),
