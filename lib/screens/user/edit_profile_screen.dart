@@ -46,7 +46,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
     }
 
-    Map<String, dynamic> data = {"username": username};
+    Map<String, dynamic> data = {"name": username};
     await _userService.updateUser(userId!, data);
 
     if (!context.mounted) return;
@@ -180,7 +180,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           EditProfileRow(
             label: "Username",
             value: user!.name,
-            valueColor: Colors.grey,
             trailingIcon: arrowIcon,
             onTap: () {
               Navigator.push(

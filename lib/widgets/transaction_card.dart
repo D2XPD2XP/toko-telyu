@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/widgets/formatted_price.dart';
 
 enum TransactionStatus { outForDelivery, completed }
 
@@ -66,9 +68,8 @@ class TransactionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 5,
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 2,
                 offset: Offset(0, 3),
               ),
             ],
@@ -90,18 +91,16 @@ class TransactionCard extends StatelessWidget {
                     children: [
                       Text(
                         "Purchase",
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
                         ),
                       ),
-                      SizedBox(height: 2),
                       Text(
                         date,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -178,17 +177,17 @@ class TransactionCard extends StatelessWidget {
                     children: [
                       Text(
                         productName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        style: GoogleFonts.poppins(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         "$itemCount Items",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w400,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -205,19 +204,9 @@ class TransactionCard extends StatelessWidget {
                     children: [
                       Text(
                         "Order Total",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
+                        style: GoogleFonts.poppins(fontSize: 12),
                       ),
-                      Text(
-                        "Rp ${orderTotal.toStringAsFixed(2)}",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
+                      FormattedPrice(price: orderTotal)
                     ],
                   ),
                   Expanded(child: Container()),
@@ -226,15 +215,24 @@ class TransactionCard extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: buttonAction,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFED1E28),
+                        backgroundColor: status == TransactionStatus.completed
+                            ? Colors.white
+                            : Color(0xFFED1E28),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        side: BorderSide(color: Color(0xFFED1E28), width: 1),
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                       ),
                       child: Text(
                         buttonText,
-                        style: TextStyle(color: Colors.white, fontSize: 14),
+                        style: GoogleFonts.poppins(
+                          color: status == TransactionStatus.completed
+                              ? Color(0xFFED1E28)
+                              : Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
