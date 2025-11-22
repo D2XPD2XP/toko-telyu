@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:toko_telyu/models/Product.dart';
+import 'package:toko_telyu/screens/user/product_details_screen.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({super.key});
@@ -9,7 +10,9 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailsScreen(),));
+      },
       borderRadius: BorderRadius.circular(15),
       child: Container(
         padding: EdgeInsets.all(8),
@@ -37,7 +40,10 @@ class ProductCard extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Icon(Symbols.heart_plus, color: Colors.grey[900]),
+                  child: InkWell(
+                    onTap: () {},
+                    child: Icon(Symbols.heart_plus, color: Colors.grey[900]),
+                  ),
                 ),
               ],
             ),
@@ -55,7 +61,7 @@ class ProductCard extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 5,),
+            SizedBox(height: 5),
             Text(
               'Rp150.000,00',
               style: GoogleFonts.poppins(

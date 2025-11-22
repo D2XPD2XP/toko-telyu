@@ -6,9 +6,8 @@ class Wishlist {
 
   Wishlist(this._wishlistId, this._userId);
 
-  factory Wishlist.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
-    return Wishlist(doc.id, data['userId']);
+  factory Wishlist.fromFirestore(Map<String, dynamic> data, String wishlistId) {
+    return Wishlist(wishlistId, data['userId']);
   }
 
   Map<String, dynamic> toFirestore() {

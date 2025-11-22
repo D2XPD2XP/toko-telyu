@@ -1,47 +1,47 @@
-import 'package:uuid/uuid.dart';
-
 class ProductVariant {
   String _variantId;
   String _optionName;
   int _stock;
   double _additionalPrice;
 
-  ProductVariant({
-    String? variantId,
-    required String optionName,
-    required int stock,
-    required double additionalPrice,
-  })  : _variantId = variantId ?? const Uuid().v4(),
-        _optionName = optionName,
-        _stock = stock,
-        _additionalPrice = additionalPrice;
+  ProductVariant(
+    this._variantId,
+    this._optionName,
+    this._stock,
+    this._additionalPrice,
+  );
 
-  factory ProductVariant.fromMap(Map<String, dynamic> map, String id) {
+  factory ProductVariant.fromFirestore(
+      Map<String, dynamic> data, String variantId) {
     return ProductVariant(
-      variantId: id,
-      optionName: map['optionName'] ?? '',
-      stock: (map['stock'] ?? 0).toInt(),
-      additionalPrice: (map['additionalPrice'] ?? 0).toDouble(),
+      variantId,
+      data['optionName'],
+      data['stock'],
+      (data['additionalPrice'] as num).toDouble(),
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toFirestore() {
     return {
-      'variantId': _variantId,
       'optionName': _optionName,
       'stock': _stock,
       'additionalPrice': _additionalPrice,
     };
   }
 
+  // Getters
   String get variantId => _variantId;
   String get optionName => _optionName;
   int get stock => _stock;
   double get additionalPrice => _additionalPrice;
 
-  set variantId(String value) => _variantId = value;
-  set optionName(String value) => _optionName = value;
-  set stock(int value) => _stock = value;
-  set additionalPrice(double value) => _additionalPrice = value;
+  // Setters
+  void setVariantId(String id) => _variantId = id;
+  void setOptionName(String name) => _optionName = name;
+  void setStock(int value) => _stock = value;
+  void setAdditionalPrice(double value) => _additionalPrice = value;
 }
+
+
+
 

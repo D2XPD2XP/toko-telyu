@@ -1,50 +1,49 @@
-import 'package:toko_telyu/models/product.dart';
-import 'package:toko_telyu/models/product_variant.dart';
-
 class CartItem {
   String? _cartItemId;
-  int? _amount;
-  double? _subtotal;
-  Product? _product;
-  ProductVariant? _variant;
+  int _amount;
+  double _subtotal;
+  String _productId;
+  String _variantId;
 
   CartItem(
     this._cartItemId,
     this._amount,
     this._subtotal,
-    this._product,
-    this._variant,
+    this._productId,
+    this._variantId,
   );
 
-  factory CartItem.fromMap(Map<String, dynamic> map) {
+  factory CartItem.fromMap(Map<String, dynamic> data, String id) {
     return CartItem(
-      map['cartItemId'],
-      map['amount'],
-      (map['subtotal'] as num?)?.toDouble(),
-      map['product'], //!= null //? Product.fromMap(map['product']) : null,
-      map['variant'] //!= null //? ProductVariant.fromMap(map['variant']) : null,
+      id,
+      data['amount'],
+      (data['subtotal'] as num).toDouble(),
+      data['productId'],
+      data['variantId'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'cartItemId': _cartItemId,
       'amount': _amount,
       'subtotal': _subtotal,
-      'product': _product,//toMap(),
-      'variant': _variant,//.toMap(),
+      'productId': _productId,
+      'variantId': _variantId,
     };
   }
 
-  String? getCartItemId() => _cartItemId;
-  int? getAmount() => _amount;
-  double? getSubtotal() => _subtotal;
-  Product? getProduct() => _product;
-  ProductVariant? getVariant() => _variant;
+  // Getters
+  String? get cartItemId => _cartItemId;
+  int get amount => _amount;
+  double get subtotal => _subtotal;
+  String get productId => _productId;
+  String get variantId => _variantId;
 
+  // Setters
   void setCartItemId(String? id) => _cartItemId = id;
-  void setAmount(int? amount) => _amount = amount;
-  void setSubtotal(double? subtotal) => _subtotal = subtotal;
-  void setProduct(Product? product) => _product = product;
-  void setVariant(ProductVariant? variant) => _variant = variant;
+  void setAmount(int value) => _amount = value;
+  void setSubtotal(double value) => _subtotal = value;
+  void setProductId(String id) => _productId = id;
+  void setVariantId(String id) => _variantId = id;
 }
+

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/enums/shipping_status.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
-
-enum TransactionStatus { outForDelivery, completed }
 
 class TransactionCard extends StatelessWidget {
   final TransactionStatus status;
@@ -206,7 +205,7 @@ class TransactionCard extends StatelessWidget {
                         "Order Total",
                         style: GoogleFonts.poppins(fontSize: 12),
                       ),
-                      FormattedPrice(price: orderTotal)
+                      FormattedPrice(price: orderTotal, size: 14, fontWeight: FontWeight.w600,)
                     ],
                   ),
                   Expanded(child: Container()),
