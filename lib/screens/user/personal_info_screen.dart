@@ -4,12 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 class PersonalInfo extends StatefulWidget {
   const PersonalInfo({
     super.key,
+    required this.userId,
     required this.title,
     required this.value,
     required this.onTap,
   });
 
-  final Future<void> Function(BuildContext, String) onTap;
+  final Future<void> Function(BuildContext, String, String) onTap;
+  final String userId;
   final String title;
   final String? value;
 
@@ -70,7 +72,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
             const SizedBox(height: 20),
             InkWell(
               onTap: () {
-                widget.onTap(context, _textController.text);
+                widget.onTap(context,  widget.userId, _textController.text);
               },
               child: Container(
                 height: 50,
