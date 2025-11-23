@@ -185,7 +185,11 @@ class _ProductScreenState extends State<ProductScreen> {
                 const SizedBox(height: 4),
 
                 // PRICE
-                FormattedPrice(price: (item["price"] ?? 0).toDouble()),
+                FormattedPrice(
+                  price: (item["price"] ?? 0).toDouble(),
+                  size: 14.0,
+                  fontWeight: FontWeight.w600,
+                ),
 
                 const SizedBox(height: 8),
 
