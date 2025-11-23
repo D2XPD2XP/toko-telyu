@@ -4,21 +4,16 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:toko_telyu/screens/authentication.dart';
-import 'package:toko_telyu/screens/user/account_screen.dart';
-import 'package:toko_telyu/screens/user/homepage.dart';
 import 'package:toko_telyu/screens/user/main_screen.dart';
 import 'package:toko_telyu/services/user_services.dart';
 import 'package:uuid/uuid.dart';
-
-const _kSessionTokenKey = 'session_token';
-const _kUserIdKey = 'user_id';
 
 class AuthServices {
   final _uuid = Uuid();
   final _secureStorage = FlutterSecureStorage();
   final _firestore = FirebaseFirestore.instance;
   final UserService _userService = UserService();
-
+  
   String hashPassword(String pass) {
     return sha256.convert(utf8.encode(pass)).toString();
   }

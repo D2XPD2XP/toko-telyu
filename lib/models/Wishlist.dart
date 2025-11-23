@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Wishlist {
   String? _wishlistId;
   String? _userId;

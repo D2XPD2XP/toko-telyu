@@ -24,7 +24,7 @@ class Product {
       ) {
     return Product(
       productId,
-      data['productName'],
+      data['product_name'],
       (data['price'] as num).toDouble(),
       data['stock'],
       data['description'],
@@ -34,11 +34,11 @@ class Product {
 
   Map<String, dynamic> toFirestore() {
     return {
-      'productName': _productName,
+      'product_name': _productName,
       'price': _price,
       'stock': _stock,
       'description': _description,
-      'categoryId': _category.categoryId,
+      'category_id': _category.categoryId,
     };
   }
 

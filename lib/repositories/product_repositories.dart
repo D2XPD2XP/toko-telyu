@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:toko_telyu/repositories/product_category_repositories.dart';
 import '../models/product.dart';
 import '../models/product_image.dart';
 import '../models/product_variant.dart';
@@ -6,37 +7,16 @@ import '../models/product_category.dart';
 
 class ProductRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ProductCategoryRepository _categoryRepository = ProductCategoryRepository();
 
-  // Main product collection
   CollectionReference<Map<String, dynamic>> get _productCollection =>
       _firestore.collection('product');
 
-  // Category collection
-  CollectionReference<Map<String, dynamic>> get _categoryCollection =>
-      _firestore.collection('product_categories');
-
-  // Subcollections
   CollectionReference<Map<String, dynamic>> _imageCollection(String productId) =>
-      _productCollection.doc(productId).collection('productImages');
+      _productCollection.doc(productId).collection('product_images');
 
   CollectionReference<Map<String, dynamic>> _variantCollection(String productId) =>
-      _productCollection.doc(productId).collection('productVariants');
-
-  // --------------------------
-  // CATEGORY
-  // --------------------------
-
-  Future<ProductCategory> getCategory(String categoryId) async {
-    final doc = await _categoryCollection.doc(categoryId).get();
-    return ProductCategory.fromFirestore(doc.data()!, doc.id);
-  }
-
-  Future<List<ProductCategory>> getAllCategories() async {
-    final snapshot = await _categoryCollection.get();
-    return snapshot.docs
-        .map((doc) => ProductCategory.fromFirestore(doc.data(), doc.id))
-        .toList();
-  }
+      _productCollection.doc(productId).collection('product_variant');
 
   // --------------------------
   // PRODUCT
@@ -50,21 +30,28 @@ class ProductRepository {
     final doc = await _productCollection.doc(productId).get();
 
     final category =
-        await getCategory(doc.data()!['categoryId']); 
+        await _categoryRepository.getCategory(doc.data()!['category_id']); 
 
     final product = Product.fromFirestore(doc.data()!, doc.id, category);
 
     return product;
   }
+  
+  Future<Product> getProductByCategory(String productId, ProductCategory category) async {
+    final doc = await _productCollection.doc(productId).get();
+    return Product.fromFirestore(doc.data()!, doc.id, category);
+  }
 
-  Future<List<Product>> getAllProducts() async {
+  Future<List<Product>> getAllProducts(
+    Map<String, ProductCategory> categoriesMap,
+  ) async {
     final snapshot = await _productCollection.get();
 
     List<Product> products = [];
 
     for (var doc in snapshot.docs) {
-      final category =
-          await getCategory(doc.data()['categoryId']);
+      final categoryId = doc.data()['category_id'];
+      final category = categoriesMap[categoryId]!;
 
       products.add(Product.fromFirestore(doc.data(), doc.id, category));
     }
@@ -77,16 +64,19 @@ class ProductRepository {
   }
 
   Future<void> deleteProduct(String productId) async {
+    // delete images
     final images = await _imageCollection(productId).get();
     for (final img in images.docs) {
       await img.reference.delete();
     }
 
+    // delete variants
     final variants = await _variantCollection(productId).get();
     for (final varDoc in variants.docs) {
       await varDoc.reference.delete();
     }
 
+    // delete main product
     await _productCollection.doc(productId).delete();
   }
 
@@ -137,4 +127,5 @@ class ProductRepository {
     await _variantCollection(productId).doc(variantId).delete();
   }
 }
+
 

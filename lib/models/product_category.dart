@@ -13,15 +13,15 @@ class ProductCategory {
       Map<String, dynamic> data, String categoryId) {
     return ProductCategory(
       categoryId,
-      data['categoryName'],
-      data['isFittable'],
+      data['category_name'],
+      data['is_fittable'],
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'categoryName': _categoryName,
-      'isFittable': _isFittable,
+      'category_name': _categoryName,
+      'is_fittable': _isFittable,
     };
   }
 

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:toko_telyu/models/product.dart';
+import 'package:toko_telyu/models/product_category.dart';
+import 'package:toko_telyu/services/product_category_services.dart';
+import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/widgets/category_circle.dart';
 import 'package:toko_telyu/widgets/product_card.dart';
 import 'package:toko_telyu/widgets/top_navbar.dart';
@@ -14,6 +18,24 @@ class Homepage extends StatefulWidget {
 }
 
 class _Homepage extends State<Homepage> {
+  final ProductService _productService = ProductService();
+  final ProductCategoryService _productCategoryService =
+      ProductCategoryService();
+  List<ProductCategory> categories = [];
+  List<Product> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    categories = await _productCategoryService.getCategories();
+    products = await _productService.getAllProducts(categories);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +50,9 @@ class _Homepage extends State<Homepage> {
           ),
           IconButton(
             icon: Icon(Icons.shopping_cart_outlined, color: Color(0xFFED1E28)),
-            onPressed: () {},
+            onPressed: () {
+              print(products.length);
+            },
           ),
           SizedBox(width: 8),
         ],
@@ -54,7 +78,10 @@ class _Homepage extends State<Homepage> {
                       ),
                     ],
                   ),
-                  child: Image(image: AssetImage('assets/promo_toktel.png'), fit: BoxFit.cover,),
+                  child: Image(
+                    image: AssetImage('assets/promo_toktel.png'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 SizedBox(
                   height: 100,
@@ -82,7 +109,10 @@ class _Homepage extends State<Homepage> {
                 crossAxisSpacing: 25,
                 childAspectRatio: 2 / 2.65,
               ),
-              delegate: SliverChildListDelegate([ProductCard(), ProductCard(), ProductCard(), ProductCard(), ProductCard(), ProductCard()]),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final product = products[index];
+                return ProductCard(product: product);
+              }, childCount: products.length),
             ),
           ),
         ],

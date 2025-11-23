@@ -7,7 +7,7 @@ import '../models/product_category.dart';
 
 class ProductService {
   final ProductRepository _repo = ProductRepository();
-  
+
   // --------------------------
   // PRODUCT
   // --------------------------
@@ -38,8 +38,17 @@ class ProductService {
     return await _repo.getProduct(productId);
   }
 
-  Future<List<Product>> getProducts() async {
-    return await _repo.getAllProducts();
+  Future<Product> getProductByCategory(String productId, ProductCategory category) async {
+    return await _repo.getProductByCategory(productId, category);
+  }
+
+
+  Future<List<Product>> getAllProducts(List<ProductCategory> categories) async {
+    final categoriesMap = {
+      for (var c in categories) c.categoryId: c,
+    };
+
+    return await _repo.getAllProducts(categoriesMap);
   }
 
   Future<void> updateProduct(String productId, Map<String, dynamic> updates) async {
@@ -100,4 +109,5 @@ class ProductService {
     await _repo.deleteVariant(productId, variantId);
   }
 }
+
 
