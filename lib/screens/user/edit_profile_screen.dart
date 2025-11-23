@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/screens/user/edit_address_screen.dart';
 import 'package:toko_telyu/screens/user/personal_info_screen.dart';
 import 'package:toko_telyu/services/user_services.dart';
-import 'package:toko_telyu/widgets/custom_dialog.dart';
 import 'package:toko_telyu/widgets/edit_profile_row.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -16,7 +14,6 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final UserService _userService = UserService();
-  String? userId;
   User? user;
 
   @override
@@ -26,84 +23,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final storage = const FlutterSecureStorage();
-    userId = await storage.read(key: 'user_id');
-
-    if (userId != null) {
-      user = await _userService.getUser(userId!);
-      setState(() {});
-    }
-  }
-
-  Future<void> _handleUsername(BuildContext context, String username) async {
-    if (username.isEmpty) {
-      return showDialog(
-        context: context,
-        builder: (ctx) => CustomDialog(
-          ctx: ctx,
-          message: 'Please make sure a valid username',
-        ),
-      );
-    }
-
-    Map<String, dynamic> data = {"name": username};
-    await _userService.updateUser(userId!, data);
-
-    if (!context.mounted) return;
-    Navigator.pop(context);
-
-    setState(() {
-      _loadUser();
-    });
-  }
-
-  Future<void> _handlePnumber(BuildContext context, String number) async {
-    if (num.tryParse(number.trim()) == null || number.length < 11) {
-      return showDialog(
-        context: context,
-        builder: (ctx) => CustomDialog(
-          ctx: ctx,
-          message: 'Please make sure a valid phone number',
-        ),
-      );
-    }
-
-    Map<String, dynamic> data = {"pnumber": number};
-    await _userService.updateUser(userId!, data);
-
-    if (!context.mounted) return;
-    Navigator.pop(context);
-
-    setState(() {
-      _loadUser();
-    });
-  }
-
-  Future<void> _handleAddress(
-    BuildContext context,
-    Map<String, dynamic> address,
-  ) async {
-    if ((address["province"]?.trim().isEmpty ?? true) ||
-        (address["city"]?.trim().isEmpty ?? true) ||
-        (address["district"]?.trim().isEmpty ?? true) ||
-        (address["postal_code"]?.trim().isEmpty ?? true) || 
-        (address["street"]?.trim().isEmpty ?? true)) {
-      return showDialog(
-        context: context,
-        builder: (ctx) =>
-            CustomDialog(ctx: ctx, message: 'Please make sure a valid address'),
-      );
-    }
-
-    Map<String, dynamic> data = {"address": address};
-    await _userService.updateUser(userId!, data);
-
-    if (!context.mounted) return;
-    Navigator.pop(context);
-
-    setState(() {
-      _loadUser();
-    });
+    user = await _userService.loadUser();
+    setState(() {});
   }
 
   Widget _buildSectionHeader(String title) {
@@ -129,7 +50,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       size: 16,
       color: Colors.grey,
     );
-    final copyIcon = Icon(Icons.copy_outlined, size: 20, color: Colors.grey);
 
     return Scaffold(
       backgroundColor: Colors.white, // Background utama
@@ -160,9 +80,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           Center(
             child: TextButton(
-              onPressed: () {
-                print("Ganti foto profil");
-              },
+              onPressed: () {},
               child: Text(
                 "Change Profile Photo",
                 style: TextStyle(
@@ -181,17 +99,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             label: "Username",
             value: user!.name,
             trailingIcon: arrowIcon,
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => PersonalInfo(
+                    userId: user!.userId,
                     title: "Username",
                     value: user!.name,
-                    onTap: _handleUsername,
+                    onTap: _userService.handleUsername,
                   ),
                 ),
               );
+              setState(() {
+                _loadUser();
+              });
             },
           ),
 
@@ -203,17 +125,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             label: "Phone Number",
             value: user?.pnumber ?? " ",
             trailingIcon: arrowIcon,
-            onTap: () {
+            onTap: () async {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => PersonalInfo(
+                    userId: user!.userId,
                     title: "Phone Number",
                     value: user?.pnumber,
-                    onTap: _handlePnumber,
+                    onTap: _userService.handlePnumber,
                   ),
                 ),
               );
+              setState(() {
+                _loadUser();
+              });
             },
           ),
 
@@ -223,16 +149,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ? "${user?.address?['street'] ?? ''}, ${user?.address?['postal_code'] ?? ''}"
                 : " ",
             trailingIcon: arrowIcon,
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditAddressScreen(
+                    userId: user!.userId,
                     value: user?.address,
-                    onTap: _handleAddress,
+                    onTap: _userService.handleAddress,
                   ),
                 ),
               );
+              setState(() {
+                _loadUser();
+              });
             },
           ),
         ],

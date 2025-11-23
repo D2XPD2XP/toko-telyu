@@ -3,9 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class FormattedPrice extends StatelessWidget {
-  const FormattedPrice({super.key, required this.price});
+  const FormattedPrice({super.key, required this.price, required this.size, required this.fontWeight});
 
   final double price;
+  final double size;
+  final FontWeight fontWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +22,8 @@ class FormattedPrice extends StatelessWidget {
     return Text(
       formattedPrice,
       style: GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
+        fontSize: size,
+        fontWeight: fontWeight,
         color: Colors.black,
       ),
     );

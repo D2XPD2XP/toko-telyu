@@ -1,36 +1,40 @@
-import 'package:toko_telyu/models/product.dart';
-import 'package:toko_telyu/models/product_variant.dart';
-
 class WishlistItem {
   String? _wishlistItemId;
-  Product? _product;
-  ProductVariant? _variant;
+  String _productId;
+  String _variantId;
 
-  WishlistItem(this._wishlistItemId, this._product, this._variant);
+  WishlistItem(
+    this._wishlistItemId,
+    this._productId,
+    this._variantId,
+  );
 
-  factory WishlistItem.fromMap(Map<String, dynamic> map) {
+  factory WishlistItem.fromMap(Map<String, dynamic> data, String id) {
     return WishlistItem(
-      map['wishlistItemId'],
-      map['product'], //!= null ? Product.fromMap(map['product']) : null,
-      map['variant'] //!= null ? ProductVariant.fromMap(map['variant']) : null,
+      id,
+      data['productId'],
+      data['variantId'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'wishlistItemId': _wishlistItemId,
-      'product': _product,//?.toMap(),
-      'variant': _variant//?.toMap(),
+      'productId': _productId,
+      'variantId': _variantId,
     };
   }
 
-  String? getWishlistItemId() => _wishlistItemId;
-  Product? getProduct() => _product;
-  ProductVariant? getVariant() => _variant;
+  // Getters
+  String? get wishlistItemId => _wishlistItemId;
+  String get productId => _productId;
+  String get variantId => _variantId;
 
+  // Setters
   void setWishlistItemId(String? id) => _wishlistItemId = id;
-  void setProduct(Product? product) => _product = product;
-  void setVariant(ProductVariant? variant) => _variant = variant;
+  void setProductId(String id) => _productId = id;
+  void setVariantId(String id) => _variantId = id;
 }
+
+
 
 

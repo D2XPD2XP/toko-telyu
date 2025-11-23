@@ -1,5 +1,4 @@
-import 'package:uuid/uuid.dart';
-import 'product_category.dart';
+import 'package:toko_telyu/models/product_category.dart';
 
 class Product {
   String _productId;
@@ -9,44 +8,41 @@ class Product {
   String _description;
   ProductCategory _category;
 
-  Product({
-    String? productId,
-    required String productName,
-    required double price,
-    required int stock,
-    required String description,
-    required ProductCategory category,
-  })  : _productId = productId ?? const Uuid().v4(),
-        _productName = productName,
-        _price = price,
-        _stock = stock,
-        _description = description,
-        _category = category;
+  Product(
+    this._productId,
+    this._productName,
+    this._price,
+    this._stock,
+    this._description,
+    this._category,
+  );
 
-  factory Product.fromMap(Map<String, dynamic> map, String id) {
+  factory Product.fromFirestore(
+      Map<String, dynamic> data,
+      String productId,
+      ProductCategory category,
+      ) {
     return Product(
-      productId: id,
-      productName: map['productName'] ?? '',
-      price: (map['price'] ?? 0).toDouble(),
-      stock: (map['stock'] ?? 0).toInt(),
-      description: map['description'] ?? '',
-      category: ProductCategory.fromMap(
-        map['category'] ?? {},
-        map['category']?['categoryId'] ?? '',
-      ),
+      productId,
+      data['product_name'],
+      (data['price'] as num).toDouble(),
+      data['stock'],
+      data['description'],
+      category,
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toFirestore() {
     return {
-      'productName': _productName,
+      'product_name': _productName,
       'price': _price,
       'stock': _stock,
       'description': _description,
-      'category': _category.toMap(),
+      'category_id': _category.categoryId,
     };
   }
 
+  // Getters
   String get productId => _productId;
   String get productName => _productName;
   double get price => _price;
@@ -54,13 +50,15 @@ class Product {
   String get description => _description;
   ProductCategory get category => _category;
 
-  set productId(String value) => _productId = value;
-  set productName(String value) => _productName = value;
-  set price(double value) => _price = value;
-  set stock(int value) => _stock = value;
-  set description(String value) => _description = value;
-  set category(ProductCategory value) => _category = value;
+  // Setters
+  void setProductId(String id) => _productId = id;
+  void setProductName(String name) => _productName = name;
+  void setPrice(double price) => _price = price;
+  void setStock(int stock) => _stock = stock;
+  void setDescription(String desc) => _description = desc;
+  void setCategory(ProductCategory cat) => _category = cat;
 }
+
 
 
 

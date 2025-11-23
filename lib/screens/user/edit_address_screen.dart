@@ -4,11 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 class EditAddressScreen extends StatefulWidget {
   const EditAddressScreen({
     super.key,
+    required this.userId,
     required this.onTap,
     required this.value,
   });
 
-  final Future<void> Function(BuildContext, Map<String, dynamic>) onTap;
+  final String userId;
+  final Future<void> Function(String, BuildContext, Map<String, dynamic>) onTap;
   final Map<String, dynamic>? value;
 
   @override
@@ -247,7 +249,7 @@ class _EditProfileScreenState extends State<EditAddressScreen> {
               const SizedBox(height: 20),
               InkWell(
                 onTap: () {
-                  widget.onTap(context, {
+                  widget.onTap(widget.userId, context, {
                     'province': _selectedProvince,
                     'city': _selectedCity,
                     'district': _selectedDistrict,

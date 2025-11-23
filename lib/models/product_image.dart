@@ -1,33 +1,33 @@
-import 'package:uuid/uuid.dart';
-
 class ProductImage {
   String _imageId;
   String _imageUrl;
 
-  ProductImage({
-    String? imageId,
-    required String imageUrl,
-  })  : _imageId = imageId ?? const Uuid().v4(),
-        _imageUrl = imageUrl;
+  ProductImage(
+    this._imageId,
+    this._imageUrl,
+  );
 
-  factory ProductImage.fromMap(Map<String, dynamic> map, String id) {
+  factory ProductImage.fromFirestore(
+      Map<String, dynamic> data, String imageId) {
     return ProductImage(
-      imageId: id,
-      imageUrl: map['imageUrl'] ?? '',
+      imageId,
+      data['imageUrl'],
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toFirestore() {
     return {
-      'imageId': _imageId,
       'imageUrl': _imageUrl,
     };
   }
 
+  // Getters
   String get imageId => _imageId;
   String get imageUrl => _imageUrl;
 
-  set imageId(String value) => _imageId = value;
-  set imageUrl(String value) => _imageUrl = value;
+  // Setters
+  void setImageId(String id) => _imageId = id;
+  void setImageUrl(String url) => _imageUrl = url;
 }
+
 

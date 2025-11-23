@@ -1,7 +1,7 @@
-import 'package:toko_telyu/repositories/wishlist_repositories.dart';
 import 'package:uuid/uuid.dart';
 import '../models/wishlist.dart';
 import '../models/wishlist_item.dart';
+import '../repositories/wishlist_repositories.dart';
 
 class WishlistService {
   final WishlistRepository _repo = WishlistRepository();
@@ -13,7 +13,24 @@ class WishlistService {
     return wishlist;
   }
 
-  Future<void> addItem(String userId, String wishlistId, WishlistItem item) async {
+  Future<void> addItem({
+    required String userId,
+    required String wishlistId,
+    required String productId,
+    required String variantId,
+  }) async {
+    final existingItems = await _repo.getWishlistItems(userId, wishlistId);
+
+    final exists = existingItems.any(
+      (item) => item.productId == productId && item.variantId == variantId,
+    );
+
+    if (exists) {
+      return;
+    }
+
+    final item = WishlistItem(const Uuid().v4(), productId, variantId);
+
     await _repo.addWishlistItem(userId, wishlistId, item);
   }
 
@@ -21,7 +38,11 @@ class WishlistService {
     return await _repo.getWishlistItems(userId, wishlistId);
   }
 
-  Future<void> deleteItem(String userId, String wishlistId, String itemId) async {
+  Future<void> deleteItem(
+    String userId,
+    String wishlistId,
+    String itemId,
+  ) async {
     await _repo.deleteWishlistItem(userId, wishlistId, itemId);
   }
 

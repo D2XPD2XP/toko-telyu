@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/services/auth_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
@@ -14,7 +13,6 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  final _secureStorage = FlutterSecureStorage();
   final AuthServices _authServices = AuthServices();
   final UserService _userService = UserService();
   String? userId;
@@ -27,13 +25,8 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _loadUser() async {
-    final storage = const FlutterSecureStorage();
-    userId = await storage.read(key: 'user_id');
-
-    if (userId != null) {
-      user = await _userService.getUser(userId!);
-      setState(() {});
-    }
+    user = await _userService.loadUser();
+    setState(() {});
   }
 
   @override
@@ -120,7 +113,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   builder: (context) => const EditProfileScreen(),
                 ),
               );
-              _loadUser();
+              _userService.loadUser();
             },
           ),
 
