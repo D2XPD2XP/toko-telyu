@@ -1,10 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/product_category.dart';
 
 class CategoryCircle extends StatelessWidget {
-  const CategoryCircle({super.key, required this.categoryIcon});
+  const CategoryCircle({super.key, required this.category});
 
-  final IconData categoryIcon;
+  final ProductCategory category;
 
   @override
   Widget build(BuildContext context) {
@@ -25,12 +27,12 @@ class CategoryCircle extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(categoryIcon, size: 33, color: Color(0xFFED1E28),),
+          child: Image.network(category.iconUrl)//Icon(categor, size: 33, color: Color(0xFFED1E28),),
         ),
         SizedBox(
           width: 70,
           child: Text(
-            'Label',
+            category.categoryName,
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w300,

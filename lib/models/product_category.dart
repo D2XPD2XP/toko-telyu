@@ -33,11 +33,13 @@ class ProductCategory {
   String get categoryId => _categoryId;
   String get categoryName => _categoryName;
   bool get isFittable => _isFittable;
+  String get iconUrl => _iconUrl;
 
   // Setters
   void setCategoryId(String id) => _categoryId = id;
   void setCategoryName(String name) => _categoryName = name;
   void setIsFittable(bool value) => _isFittable = value;
+  void setIconUrl(String iconUrl) => _iconUrl = iconUrl;
 }
 
 
