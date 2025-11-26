@@ -83,7 +83,8 @@ class _Homepage extends State<Homepage> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                SizedBox(
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
                   height: 100,
                   child: ListView(
                     scrollDirection: Axis.horizontal,

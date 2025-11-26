@@ -5,13 +5,14 @@ import '../models/product_category.dart';
 class ProductCategoryService {
   final ProductCategoryRepository _repo = ProductCategoryRepository();
 
-  Future<ProductCategory> createCategory(String name, bool isFittable) async {
+  Future<ProductCategory> createCategory(String name, bool isFittable, String iconUrl) async {
     final id = const Uuid().v4();
 
     final category = ProductCategory(
       id,
       name,
       isFittable,
+      iconUrl,
     );
 
     await _repo.createCategory(category);

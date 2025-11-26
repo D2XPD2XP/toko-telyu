@@ -2,11 +2,13 @@ class ProductCategory {
   String _categoryId;
   String _categoryName;
   bool _isFittable;
+  String _iconUrl;
 
   ProductCategory(
     this._categoryId,
     this._categoryName,
     this._isFittable,
+    this._iconUrl,
   );
 
   factory ProductCategory.fromFirestore(
@@ -15,6 +17,7 @@ class ProductCategory {
       categoryId,
       data['category_name'],
       data['is_fittable'],
+      data['icon_url'],
     );
   }
 
@@ -22,6 +25,7 @@ class ProductCategory {
     return {
       'category_name': _categoryName,
       'is_fittable': _isFittable,
+      'icon_url' : _iconUrl,
     };
   }
 

@@ -41,7 +41,7 @@ class ProductCard extends StatelessWidget {
               alignment: Alignment.topRight,
               children: [
                 Image(
-                  image: NetworkImage(
+                  image: NetworkImage(  
                     'https://drive.google.com/uc?export=view&id=1aCCYCk-dQsGAjlt6cqBEX0EASOTjl34C',
                   ),
                   width: 200,
