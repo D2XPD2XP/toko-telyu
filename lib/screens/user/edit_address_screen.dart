@@ -254,7 +254,7 @@ class _EditProfileScreenState extends State<EditAddressScreen> {
                     'city': _selectedCity,
                     'district': _selectedDistrict,
                     'postal_code': _selectedPostalCode,
-                    'street': _textController.text
+                    'street': _textController.text,
                   });
                 },
                 child: Container(

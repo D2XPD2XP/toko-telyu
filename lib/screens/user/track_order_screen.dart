@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TrackOrderScreen extends StatelessWidget {
   const TrackOrderScreen({Key? key}) : super(key: key);
@@ -11,26 +12,31 @@ class TrackOrderScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          "Detail Status",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-
         backgroundColor: Colors.white,
         elevation: 1,
+        titleSpacing: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back_ios, size: 20, color: Colors.black),
           onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Detail Status",
+          style: GoogleFonts.poppins(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
       ),
       body: ListView(
         children: [
+          // ... (Sisa kode body sama seperti sebelumnya)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 30),
             child: Row(
               children: [
                 _buildStepperStep(
-                  icon: Icons.inventory_2_outlined,
+                  icon: Icons.widgets_outlined,
                   label: "Packed",
                   isCompleted: true,
                   isActive: false,
@@ -38,9 +44,8 @@ class TrackOrderScreen extends StatelessWidget {
                   greyColor: greyColor,
                 ),
                 _buildStepperConnector(isCompleted: true, mainColor: mainColor),
-
                 _buildStepperStep(
-                  icon: Icons.local_shipping, 
+                  icon: Icons.local_shipping,
                   label: "Shipped",
                   isCompleted: false,
                   isActive: true,
@@ -51,9 +56,8 @@ class TrackOrderScreen extends StatelessWidget {
                   isCompleted: false,
                   mainColor: mainColor,
                 ),
-
                 _buildStepperStep(
-                  icon: Icons.inventory_outlined, 
+                  icon: Icons.inventory_outlined,
                   label: "Delivered",
                   isCompleted: false,
                   isActive: false,
@@ -84,7 +88,6 @@ class TrackOrderScreen extends StatelessWidget {
             ),
           ),
 
-
           _buildTimelineItem(
             date: "Monday, 04 October 2025",
             time: "11:48 WIB",
@@ -92,7 +95,7 @@ class TrackOrderScreen extends StatelessWidget {
                 "Paket sedang disiapkan dan akan diserahkan kepada ekpedisi untuk dikirimkan.",
             courier: "Kurir: JNE",
             isLast: false,
-            isActive: true, 
+            isActive: true,
             mainColor: mainColor,
             greyColor: greyColor,
           ),
@@ -103,7 +106,7 @@ class TrackOrderScreen extends StatelessWidget {
                 "Paket sedang disiapkan dan akan diserahkan kepada ekpedisi untuk dikirimkan.",
             courier: "Kurir: JNE",
             isLast: false,
-            isActive: false, 
+            isActive: false,
             mainColor: mainColor,
             greyColor: greyColor,
           ),
@@ -124,7 +127,7 @@ class TrackOrderScreen extends StatelessWidget {
             description:
                 "Paket sedang disiapkan dan akan diserahkan kepada ekpedisi untuk dikirimkan.",
             courier: "Kurir: JNE",
-            isLast: true, 
+            isLast: true,
             isActive: false,
             mainColor: mainColor,
             greyColor: greyColor,
@@ -134,8 +137,9 @@ class TrackOrderScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BANTU UNTUK STEPPER ---
-  // Ini adalah versi yang sudah diperbaiki layout-nya
+  // ... (Helper Widgets seperti _buildStepperStep, _buildStatusCircle, dll TETAP SAMA)
+  // Saya salin ulang helper widgets agar file lengkap dan runnable
+
   Widget _buildStepperStep({
     required IconData icon,
     required String label,
@@ -144,7 +148,6 @@ class TrackOrderScreen extends StatelessWidget {
     required Color mainColor,
     required Color greyColor,
   }) {
-    // Tentukan warna berdasarkan status
     Color iconColor = isCompleted || isActive ? mainColor : greyColor;
     Color textColor = isActive
         ? mainColor
@@ -154,21 +157,11 @@ class TrackOrderScreen extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          // Stack dengan layout yang lebih aman (tidak pakai bottom negatif)
           Stack(
             alignment: Alignment.center,
             children: [
-              // Latar putih di belakang ikon (mencegah terpotong)
-              Container(
-                width: 40,
-                height: 35, // Beri ruang 35px untuk ikon + lingkaran
-                color: Colors.white,
-              ),
-
-              // Ikon utama (dipaksa ke atas)
+              Container(width: 40, height: 35, color: Colors.white),
               Positioned(top: 0, child: Icon(icon, size: 30, color: iconColor)),
-
-              // Lingkaran status (dipaksa ke bawah)
               Positioned(
                 bottom: 0,
                 child: _buildStatusCircle(
@@ -180,7 +173,7 @@ class TrackOrderScreen extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12), 
+          SizedBox(height: 12),
           Text(
             label,
             style: TextStyle(color: textColor, fontWeight: textWeight),
@@ -229,14 +222,13 @@ class TrackOrderScreen extends StatelessWidget {
     );
   }
 
-
   Widget _buildStepperConnector({
     required bool isCompleted,
     required Color mainColor,
   }) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 25.0), 
+        padding: const EdgeInsets.only(bottom: 25.0),
         child: Divider(
           color: isCompleted ? mainColor : Colors.grey.shade300,
           thickness: 2,
@@ -276,13 +268,11 @@ class TrackOrderScreen extends StatelessWidget {
                   ),
                   child: Icon(iconData, color: iconColor, size: 24),
                 ),
-
                 if (!isLast)
                   Expanded(child: Container(width: 2, color: greyColor)),
               ],
             ),
           ),
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 24.0, right: 16.0),
