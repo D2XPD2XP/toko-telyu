@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:toko_telyu/screens/authentication.dart';
 import 'package:toko_telyu/screens/user/main_screen.dart';
 import 'package:toko_telyu/services/firebase_options.dart';
+import 'package:toko_telyu/widgets/connection_guard.dart';
 
 final _secureStorage = FlutterSecureStorage();
 
@@ -75,6 +76,7 @@ class _App extends State<App> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: _isLoggedIn ? MainScreen() : Authentication(),
+      builder: (context, child) => ConnectionGuard(child: child!),
     );
   }
 }

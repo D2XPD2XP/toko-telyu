@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/widgets/formatted_price.dart';
 import 'package:toko_telyu/widgets/product_image_carousel.dart';
 import 'package:toko_telyu/widgets/variant_item.dart';
 
@@ -30,11 +31,6 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
           SizedBox(width: 10),
         ],
         backgroundColor: Color(0xFFEEEEEE),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       backgroundColor: Color(0xFFEEEEEE),
       body: SingleChildScrollView(
@@ -50,7 +46,7 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 2,
                     offset: Offset(0, 3),
                   ),
@@ -59,20 +55,16 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
               child: ProductImageCarousel(),
             ),
             Container(
-              padding: EdgeInsets.only(
-                top: 14,
-                left: 23,
-                right: 11,
-                bottom: 14,
-              ),
+              padding: EdgeInsets.only(top: 14, left: 23, right: 11),
               margin: EdgeInsets.symmetric(horizontal: 25),
               width: 375,
+              height: 307,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 2,
                     offset: Offset(0, 3),
                   ),
@@ -96,13 +88,10 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                     ),
                   ),
                   SizedBox(height: 6),
-                  Text(
-                    "Rp 150.000,00",
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
+                  FormattedPrice(
+                    price: 150000,
+                    size: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                   Text(
                     'Stok: 81',
@@ -161,62 +150,61 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
               ),
             ),
             SizedBox(height: 19),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              width: double.infinity,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Row(
-                children: [
-                  InkWell(
-                    onTap: () {},
-                    child: Container(
-                      width: 180,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Color(0xFFED1E28), width: 1),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Buy Now',
-                        style: GoogleFonts.poppins(
-                          color: Color(0xFFED1E28),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        width: double.infinity,
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          children: [
+            InkWell(
+              onTap: () {},
+              child: Container(
+                width: 170,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Color(0xFFED1E28), width: 1),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Buy Now',
+                  style: GoogleFonts.poppins(
+                    color: Color(0xFFED1E28),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 20,
                   ),
-                  SizedBox(width: 11),
-                  InkWell(
-                    onTap: () {},
-                    child: Container(
-                      width: 180,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Color(0xFFED1E28),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Add to cart',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(width: 11),
+            InkWell(
+              onTap: () {},
+              child: Container(
+                width: 170,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Color(0xFFED1E28),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Add to cart',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
