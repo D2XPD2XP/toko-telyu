@@ -15,7 +15,7 @@ class AuthServices {
   final _secureStorage = FlutterSecureStorage();
   final _firestore = FirebaseFirestore.instance;
   final UserService _userService = UserService();
-  
+
   String hashPassword(String pass) {
     return sha256.convert(utf8.encode(pass)).toString();
   }
@@ -40,17 +40,17 @@ class AuthServices {
 
       if (user.role == RoleEnum.USER) {
         Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => MainScreen()),
-        (route) => false,
-      );
+          context,
+          MaterialPageRoute(builder: (context) => MainScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => MainAdminScreen()),
+          (route) => false,
+        );
       }
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => MainAdminScreen()),
-        (route) => false,
-      );
     } catch (e) {
       return showDialog(
         context: context,
