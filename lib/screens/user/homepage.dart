@@ -83,19 +83,14 @@ class _Homepage extends State<Homepage> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                SizedBox(
                   height: 100,
-                  child: ListView(
+                  child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    children: const [
-                      CategoryCircle(categoryIcon: Symbols.apparel),
-                      CategoryCircle(categoryIcon: Symbols.steps),
-                      CategoryCircle(categoryIcon: Symbols.backpack),
-                      CategoryCircle(categoryIcon: Symbols.ink_pen),
-                      CategoryCircle(categoryIcon: Symbols.menu_book),
-                      CategoryCircle(categoryIcon: Symbols.apparel),
-                    ],
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      return CategoryCircle(category: categories[index],); 
+                    },
                   ),
                 ),
               ],
