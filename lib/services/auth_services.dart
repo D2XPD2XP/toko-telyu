@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:toko_telyu/enums/role.dart';
+import 'package:toko_telyu/screens/admin/main_admin_screen.dart';
 import 'package:toko_telyu/screens/authentication.dart';
 import 'package:toko_telyu/screens/user/main_screen.dart';
 import 'package:toko_telyu/services/user_services.dart';
@@ -36,9 +38,17 @@ class AuthServices {
       await _secureStorage.write(key: 'session_token', value: token);
       await _secureStorage.write(key: 'user_id', value: user.userId);
 
-      Navigator.pushAndRemoveUntil(
+      if (user.role == RoleEnum.USER) {
+        Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => MainScreen()),
+        (route) => false,
+      );
+      }
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => MainAdminScreen()),
         (route) => false,
       );
     } catch (e) {
@@ -153,6 +163,7 @@ class AuthServices {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text(
           "Signup Success!",
           style: TextStyle(
@@ -175,6 +186,7 @@ class AuthServices {
                 );
               },
               style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(Colors.white),
                 foregroundColor: WidgetStateProperty.all(Colors.lightGreen),
               ),
               child: Text(

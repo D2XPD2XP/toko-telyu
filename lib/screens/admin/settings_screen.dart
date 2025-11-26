@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toko_telyu/services/auth_services.dart';
 import 'shipping_area_screen.dart';
 import 'pickup_point_screen.dart';
 
@@ -97,6 +98,7 @@ class SettingsScreen extends StatelessWidget {
   // -----------------------------------
   @override
   Widget build(BuildContext context) {
+    AuthServices authServices = AuthServices();
     return Scaffold(
       backgroundColor: Colors.grey[100],
 
@@ -143,7 +145,9 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.logout_rounded,
             title: "Logout",
             iconBg: Colors.red.withOpacity(0.12),
-            onTap: () {},
+            onTap: () {
+              authServices.logout(context);
+            },
           ),
         ],
       ),
