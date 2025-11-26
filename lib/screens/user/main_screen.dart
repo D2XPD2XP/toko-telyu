@@ -12,13 +12,13 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0; 
+  int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    Homepage(), 
-    FavoritesScreen(), 
-    TransactionScreen(), 
-    AccountScreen(), 
+  final List<Widget> _widgetOptions = <Widget>[
+    Homepage(),
+    FavoritesScreen(),
+    TransactionScreen(),
+    AccountScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -30,11 +30,14 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _widgetOptions),
+      body: _widgetOptions[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite_border),
             label: 'Favorites',
@@ -43,10 +46,13 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.receipt_long),
             label: 'Transaction',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Account'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Account',
+          ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFFE53935), 
+        selectedItemColor: Color(0xFFE53935),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         onTap: _onItemTapped,
