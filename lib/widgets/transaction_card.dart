@@ -47,20 +47,13 @@ class TransactionCard extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ), // Margin di luar
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
-        // Bungkus dengan InkWell
-        onTap: onTap, // Gunakan parameter onTap
-        borderRadius: BorderRadius.circular(
-          12,
-        ), // Agar efek splash-nya melengkung
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
         splashColor: Color(0xFFED1E28).withOpacity(0.1),
         highlightColor: Color(0xFFED1E28).withOpacity(0.05),
         child: Container(
-          // margin: ... (DIPINDAH KELUAR)
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -96,12 +89,7 @@ class TransactionCard extends StatelessWidget {
                           color: Colors.black87,
                         ),
                       ),
-                      Text(
-                        date,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                        ),
-                      ),
+                      Text(date, style: GoogleFonts.poppins(fontSize: 11)),
                     ],
                   ),
                   Expanded(child: Container()),
@@ -123,13 +111,14 @@ class TransactionCard extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  // Container pembungkus untuk meratakan titik 3 ke kanan
                   Container(
-                    width: 30, // Atur lebar agar lebih ramping
-                    alignment: Alignment.centerRight, // Ratakan ikon ke kanan
+                    width: 30,
+                    alignment: Alignment.centerRight,
                     child: PopupMenuButton<String>(
                       color: Colors.white,
                       onSelected: (String value) {
-                        // ... (logika onSelected Anda)
                         print("Pilihan menu: $value");
                         if (value == 'support') {
                           // Navigasi ke halaman support
@@ -160,17 +149,32 @@ class TransactionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 51,
+                    height: 47.17,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      image: DecorationImage(
-                        image: AssetImage(productImage),
-                        fit: BoxFit.cover,
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15), // Radius 15
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 1,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        productImage,
+                        width: 38.76,
+                        height: 34.92,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
+
                   SizedBox(width: 12),
+
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -205,7 +209,11 @@ class TransactionCard extends StatelessWidget {
                         "Order Total",
                         style: GoogleFonts.poppins(fontSize: 12),
                       ),
-                      FormattedPrice(price: orderTotal, size: 14, fontWeight: FontWeight.w600,)
+                      FormattedPrice(
+                        price: orderTotal,
+                        size: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ],
                   ),
                   Expanded(child: Container()),

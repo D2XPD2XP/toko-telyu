@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Pastikan import untuk Poppins
 import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/screens/user/edit_address_screen.dart';
 import 'package:toko_telyu/screens/user/personal_info_screen.dart';
@@ -52,121 +53,134 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white, // Background utama
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("Edit Profile"),
         backgroundColor: Colors.white,
         elevation: 1,
+        titleSpacing: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        titleTextStyle: TextStyle(
-          color: Colors.black,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+        title: Text(
+          "Edit Profile",
+          style: GoogleFonts.poppins(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
 
-      body: ListView(
-        children: [
-          SizedBox(height: 30),
-          Center(
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey.shade200,
-              child: Icon(Icons.person, size: 60, color: Colors.grey.shade400),
+      body: user == null
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              children: [
+                SizedBox(height: 30),
+                Center(
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey.shade200,
+                    child: Icon(
+                      Icons.person,
+                      size: 60,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ),
+                Center(
+                  child: TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      "Change Profile Photo",
+                      style: TextStyle(
+                        color: Color(0xFFED1E28),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                _buildSectionHeader("Profile Info"),
+
+                EditProfileRow(
+                  label: "Username",
+                  value: user!.name,
+                  trailingIcon: arrowIcon,
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PersonalInfo(
+                          userId: user!.userId,
+                          title: "Username",
+                          value: user!.name,
+                          onTap: _userService.handleUsername,
+                        ),
+                      ),
+                    );
+                    setState(() {
+                      _loadUser();
+                    });
+                  },
+                ),
+
+                _buildSectionHeader("Personal Info"),
+
+                EditProfileRow(
+                  label: "E-mail",
+                  value: user!.email,
+                  onTap: () {},
+                ),
+
+                EditProfileRow(
+                  label: "Phone Number",
+                  value: user?.pnumber ?? " ",
+                  trailingIcon: arrowIcon,
+                  onTap: () async {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PersonalInfo(
+                          userId: user!.userId,
+                          title: "Phone Number",
+                          value: user?.pnumber,
+                          onTap: _userService.handlePnumber,
+                        ),
+                      ),
+                    );
+                    setState(() {
+                      _loadUser();
+                    });
+                  },
+                ),
+
+                EditProfileRow(
+                  label: "Address",
+                  value: user?.address != null
+                      ? "${user?.address?['street'] ?? ''}, ${user?.address?['postal_code'] ?? ''}"
+                      : " ",
+                  trailingIcon: arrowIcon,
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditAddressScreen(
+                          userId: user!.userId,
+                          value: user?.address,
+                          onTap: _userService.handleAddress,
+                        ),
+                      ),
+                    );
+                    setState(() {
+                      _loadUser();
+                    });
+                  },
+                ),
+              ],
             ),
-          ),
-          Center(
-            child: TextButton(
-              onPressed: () {},
-              child: Text(
-                "Change Profile Photo",
-                style: TextStyle(
-                  color: Color(0xFFED1E28), // Warna merah Anda
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 20),
-
-          _buildSectionHeader("Profile Info"),
-
-          EditProfileRow(
-            label: "Username",
-            value: user!.name,
-            trailingIcon: arrowIcon,
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PersonalInfo(
-                    userId: user!.userId,
-                    title: "Username",
-                    value: user!.name,
-                    onTap: _userService.handleUsername,
-                  ),
-                ),
-              );
-              setState(() {
-                _loadUser();
-              });
-            },
-          ),
-
-          _buildSectionHeader("Personal Info"),
-
-          EditProfileRow(label: "E-mail", value: user!.email, onTap: () {}),
-
-          EditProfileRow(
-            label: "Phone Number",
-            value: user?.pnumber ?? " ",
-            trailingIcon: arrowIcon,
-            onTap: () async {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PersonalInfo(
-                    userId: user!.userId,
-                    title: "Phone Number",
-                    value: user?.pnumber,
-                    onTap: _userService.handlePnumber,
-                  ),
-                ),
-              );
-              setState(() {
-                _loadUser();
-              });
-            },
-          ),
-
-          EditProfileRow(
-            label: "Address",
-            value: user?.address != null
-                ? "${user?.address?['street'] ?? ''}, ${user?.address?['postal_code'] ?? ''}"
-                : " ",
-            trailingIcon: arrowIcon,
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditAddressScreen(
-                    userId: user!.userId,
-                    value: user?.address,
-                    onTap: _userService.handleAddress,
-                  ),
-                ),
-              );
-              setState(() {
-                _loadUser();
-              });
-            },
-          ),
-        ],
-      ),
     );
   }
 }

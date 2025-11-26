@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:toko_telyu/enums/shipping_status.dart';
-// Ganti toko_telyu dengan nama project Anda
 import 'package:toko_telyu/widgets/transaction_card.dart';
 import 'package:toko_telyu/screens/user/order_detail_screen.dart';
 import 'package:toko_telyu/screens/user/track_order_screen.dart';
+import 'package:toko_telyu/widgets/top_navbar.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({Key? key}) : super(key: key);
@@ -19,30 +19,33 @@ class _TransactionScreenState extends State<TransactionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Background abu-abu muda
+      backgroundColor: Colors.grey[100],
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60.0), // Tinggi AppBar
+        preferredSize: Size.fromHeight(60.0),
         child: AppBar(
           backgroundColor: Colors.grey[100],
           elevation: 0,
-          automaticallyImplyLeading: false, // Menghilangkan tombol back
+          automaticallyImplyLeading: false,
           titleSpacing: 16,
-          title: _buildSearchBar(),
+
+          title: TopNavbar(
+            onChanged: () {
+              // Logika pencarian transaksi bisa ditambahkan di sini nanti
+            },
+            text: "SEARCH TRANSACTION",
+          ),
+
           actions: [
             IconButton(
               icon: Icon(Icons.chat_bubble_outline, color: Color(0xFFED1E28)),
-              onPressed: () {
-                /* Aksi chat */
-              },
+              onPressed: () {},
             ),
             IconButton(
               icon: Icon(
                 Icons.shopping_cart_outlined,
                 color: Color(0xFFED1E28),
               ),
-              onPressed: () {
-                /* Aksi keranjang */
-              },
+              onPressed: () {},
             ),
             SizedBox(width: 8),
           ],
@@ -118,28 +121,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
             },
           ),
 
-          SizedBox(height: 20), 
+          SizedBox(height: 20),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: "SEARCH TRANSACTION",
-          hintStyle: TextStyle(color: Colors.black, fontSize: 10),
-          prefixIcon: Icon(Icons.search, size: 20),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 2),
-        ),
       ),
     );
   }
@@ -180,6 +163,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
             value: value,
             isExpanded: true,
             icon: Icon(Icons.keyboard_arrow_down, size: 20),
+            dropdownColor: Colors.white,
             style: TextStyle(
               color: Colors.black87,
               fontSize: 14,

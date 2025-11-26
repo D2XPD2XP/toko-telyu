@@ -15,10 +15,7 @@ class CustomDialog extends StatelessWidget {
         style: TextStyle(color: Color(0xFFED1E28), fontWeight: FontWeight.bold),
         textAlign: TextAlign.center,
       ),
-      content: Text(
-        message,
-        textAlign: TextAlign.center,
-      ),
+      content: Text(message, textAlign: TextAlign.center),
       actions: [
         Center(
           child: ElevatedButton(
@@ -26,10 +23,10 @@ class CustomDialog extends StatelessWidget {
               Navigator.pop(ctx);
             },
             style: ButtonStyle(
-              foregroundColor: WidgetStateProperty.all(const Color(0xFFED1E28)),
-              backgroundColor: WidgetStateProperty.all(
+              foregroundColor: WidgetStateProperty.all(
                 const Color.fromARGB(255, 255, 255, 255),
               ),
+              backgroundColor: WidgetStateProperty.all(const Color(0xFFED1E28)),
             ),
             child: Text("OK"),
           ),

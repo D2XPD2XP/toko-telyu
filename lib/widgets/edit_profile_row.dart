@@ -4,8 +4,8 @@ class EditProfileRow extends StatelessWidget {
   final String label;
   final String value;
   final VoidCallback onTap;
-  final Widget? trailingIcon; 
-  final Color? valueColor; 
+  final Widget? trailingIcon;
+  final Color? valueColor;
 
   const EditProfileRow({
     Key? key,
