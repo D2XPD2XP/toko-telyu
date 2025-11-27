@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_category.dart';
+import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/services/product_category_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/widgets/category_circle.dart';
@@ -22,6 +23,7 @@ class _Homepage extends State<Homepage> {
       ProductCategoryService();
   List<ProductCategory> categories = [];
   List<Product> products = [];
+  Map<String, List<ProductImage>> productImages = {};
 
   @override
   void initState() {
@@ -32,6 +34,9 @@ class _Homepage extends State<Homepage> {
   Future<void> _loadData() async {
     categories = await _productCategoryService.getCategories();
     products = await _productService.getAllProducts(categories);
+    for (var p in products) {
+      productImages[p.productId] = await _productService.getImages(p.productId);
+    }
     setState(() {});
   }
 
@@ -88,7 +93,7 @@ class _Homepage extends State<Homepage> {
                     scrollDirection: Axis.horizontal,
                     itemCount: categories.length,
                     itemBuilder: (context, index) {
-                      return CategoryCircle(category: categories[index],); 
+                      return CategoryCircle(category: categories[index]);
                     },
                   ),
                 ),
@@ -106,7 +111,10 @@ class _Homepage extends State<Homepage> {
               ),
               delegate: SliverChildBuilderDelegate((context, index) {
                 final product = products[index];
-                return ProductCard(product: product);
+                final firstImage = productImages[product.productId]!.isNotEmpty
+                    ? productImages[product.productId]![0]
+                    : null;
+                return ProductCard(product: product, image: firstImage);
               }, childCount: products.length),
             ),
           ),

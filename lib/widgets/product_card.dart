@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:toko_telyu/models/product.dart';
+import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/screens/user/product_details_screen.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key, required this.product});
+  const ProductCard({super.key, required this.product, required this.image});
 
   final Product product;
+  final ProductImage? image;
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +18,7 @@ class ProductCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ProductDetailsScreen()),
+          MaterialPageRoute(builder: (context) => ProductDetailsScreen(productId: product.productId,)),
         );
       },
       borderRadius: BorderRadius.circular(15),
@@ -42,7 +44,7 @@ class ProductCard extends StatelessWidget {
               children: [
                 Image(
                   image: NetworkImage(  
-                    'https://drive.google.com/uc?export=view&id=1aCCYCk-dQsGAjlt6cqBEX0EASOTjl34C',
+                    image?.imageUrl ?? '',
                   ),
                   width: 200,
                 ),

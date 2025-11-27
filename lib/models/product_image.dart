@@ -11,13 +11,13 @@ class ProductImage {
       Map<String, dynamic> data, String imageId) {
     return ProductImage(
       imageId,
-      data['imageUrl'],
+      data['image_url'],
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'imageUrl': _imageUrl,
+      'image_url': _imageUrl,
     };
   }
 
