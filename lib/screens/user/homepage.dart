@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_category.dart';
 import 'package:toko_telyu/services/product_category_services.dart';
