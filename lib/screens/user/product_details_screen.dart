@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/product.dart';
+import 'package:toko_telyu/models/product_image.dart';
+import 'package:toko_telyu/models/product_variant.dart';
+import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 import 'package:toko_telyu/widgets/product_image_carousel.dart';
 import 'package:toko_telyu/widgets/variant_item.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
-  const ProductDetailsScreen({super.key});
+  const ProductDetailsScreen({super.key, required this.productId});
+
+  final String productId;
 
   @override
   State<ProductDetailsScreen> createState() {
@@ -14,8 +20,44 @@ class ProductDetailsScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreen extends State<ProductDetailsScreen> {
+  final ProductService _productService = ProductService();
+  Product? product;
+  List<ProductImage>? images;
+  List<ProductVariant>? variants;
+  int selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    product = await _productService.getProduct(widget.productId);
+    images = await _productService.getImages(widget.productId);
+    if (product!.category.isFittable) {
+      variants = await _productService.getVariants(widget.productId);
+    }
+    setState(() {});
+  }
+
+  void handleButton(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (product == null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFED1E28)),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -40,7 +82,6 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
               padding: EdgeInsets.symmetric(vertical: 26),
               margin: EdgeInsets.symmetric(vertical: 14, horizontal: 25),
               width: 375,
-              height: 348,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
@@ -52,13 +93,17 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                   ),
                 ],
               ),
-              child: ProductImageCarousel(),
+              child: ProductImageCarousel(images: images!),
             ),
             Container(
-              padding: EdgeInsets.only(top: 14, left: 23, right: 11),
+              padding: EdgeInsets.only(
+                top: 14,
+                bottom: 20,
+                left: 23,
+                right: 11,
+              ),
               margin: EdgeInsets.symmetric(horizontal: 25),
               width: 375,
-              height: 307,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
@@ -74,14 +119,14 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Apparel',
+                    product!.category.categoryName,
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w300,
                     ),
                   ),
                   Text(
-                    'Seragam Telkom - Merah',
+                    product!.productName,
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -89,47 +134,55 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                   ),
                   SizedBox(height: 6),
                   FormattedPrice(
-                    price: 150000,
+                    price: product!.price,
                     size: 16,
                     fontWeight: FontWeight.w500,
                   ),
                   Text(
-                    'Stok: 81',
+                    product!.category.isFittable && variants!.isNotEmpty
+                        ? 'Stok: ${variants![selectedIndex].stock}'
+                        : 'Stok: ${product!.stock}',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w300,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () {},
-                    child: Row(
-                      children: [
-                        Text(
-                          'Select Size',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                  if (product!.category.isFittable && variants!.isNotEmpty) ...[
+                    SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () {},
+                      child: Row(
+                        children: [
+                          Text(
+                            'Select Size',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                        Icon(Icons.keyboard_arrow_right),
-                      ],
+                          Icon(Icons.keyboard_arrow_right),
+                        ],
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      VariantItem(variant: 'S'),
-                      SizedBox(width: 6),
-                      VariantItem(variant: 'M'),
-                      SizedBox(width: 6),
-                      VariantItem(variant: 'L'),
-                      SizedBox(width: 6),
-                      VariantItem(variant: 'XL'),
-                      SizedBox(width: 6),
-                      VariantItem(variant: 'XXL'),
-                    ],
-                  ),
+                    SizedBox(height: 6),
+                    SizedBox(
+                      height: 25,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: variants!.length,
+                        itemBuilder: (context, index) {
+                          bool isSelected = index == selectedIndex;
+                          ProductVariant variant = variants![index];
+                          return VariantItem(
+                            variant: variant.optionName,
+                            isSelected: isSelected,
+                            idx: index,
+                            onTap: handleButton,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                   SizedBox(height: 8),
                   Text(
                     'Product Description',

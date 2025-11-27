@@ -15,17 +15,17 @@ class ProductVariant {
       Map<String, dynamic> data, String variantId) {
     return ProductVariant(
       variantId,
-      data['optionName'],
+      data['option_name'],
       data['stock'],
-      (data['additionalPrice'] as num).toDouble(),
+      (data['additional_price'] as num).toDouble(),
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'optionName': _optionName,
+      'option_name': _optionName,
       'stock': _stock,
-      'additionalPrice': _additionalPrice,
+      'additional_price': _additionalPrice,
     };
   }
 
