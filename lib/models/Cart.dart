@@ -1,14 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Cart {
   String? _cartId;
   String? _userId;
 
   Cart(this._cartId, this._userId);
 
-  factory Cart.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
-    return Cart(doc.id, data['userId']);
+  factory Cart.fromFirestore(Map<String, dynamic> data, String cartId) {
+    return Cart(cartId, data['userId']);
   }
 
   Map<String, dynamic> toFirestore() {

@@ -24,6 +24,14 @@ class WishlistRepository {
     ).doc(wishlist.wishlistId).set(wishlist.toFirestore());
   }
 
+  Future<Wishlist> getWishlist(String userId) async {
+    final snapshot = await _wishlistCollection(userId).get();
+
+    final doc = snapshot.docs.first;
+
+    return Wishlist.fromFirestore(doc.data(), doc.id);
+  }
+
   Future<void> addWishlistItem(
     String userId,
     String wishlistId,

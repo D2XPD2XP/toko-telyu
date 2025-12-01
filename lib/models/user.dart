@@ -10,8 +10,6 @@ class User {
   Map<String, dynamic>? _address;
   String _password;
   RoleEnum _role;
-  Cart? _cart;
-  Wishlist? _wishlist;
 
   User(
     this._userId,
@@ -23,11 +21,9 @@ class User {
     RoleEnum role = RoleEnum.USER,
     Cart? cart,
     Wishlist? wishlist,
-  })  : _pnumber = pnumber,
-        _address = address,
-        _role = role,
-        _cart = cart,
-        _wishlist = wishlist;
+  }) : _pnumber = pnumber,
+       _address = address,
+       _role = role;
 
   // Getters
   String get userId => _userId;
@@ -37,8 +33,6 @@ class User {
   Map<String, dynamic>? get address => _address;
   String get password => _password;
   RoleEnum get role => _role;
-  Cart? get cart => _cart;
-  Wishlist? get wishlist => _wishlist;
 
   // Setters
   void setUserId(String id) => _userId = id;
@@ -48,8 +42,6 @@ class User {
   void setPnumber(String? number) => _pnumber = number;
   void setAddress(Map<String, dynamic>? address) => _address = address;
   void setRole(RoleEnum role) => _role = role;
-  void setCart(Cart? cart) => _cart = cart;
-  void setWishlist(Wishlist? wishlist) => _wishlist = wishlist;
 
   // Firestore conversion
   factory User.fromFirestore(Map<String, dynamic> data, String userId) {

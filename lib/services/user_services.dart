@@ -41,9 +41,6 @@ class UserService {
     final wishlist = Wishlist(wishlistId, userId);
     await _wishlistRepo.createWishlist(userId, wishlist);
 
-    user.setCart(cart);
-    user.setWishlist(wishlist);
-
     return user;
   }
 

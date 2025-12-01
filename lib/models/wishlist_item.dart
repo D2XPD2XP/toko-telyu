@@ -1,7 +1,7 @@
 class WishlistItem {
   String? _wishlistItemId;
   String _productId;
-  String _variantId;
+  String? _variantId;
 
   WishlistItem(
     this._wishlistItemId,
@@ -27,7 +27,7 @@ class WishlistItem {
   // Getters
   String? get wishlistItemId => _wishlistItemId;
   String get productId => _productId;
-  String get variantId => _variantId;
+  String? get variantId => _variantId;
 
   // Setters
   void setWishlistItemId(String? id) => _wishlistItemId = id;

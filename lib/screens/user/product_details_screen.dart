@@ -93,7 +93,11 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                   ),
                 ],
               ),
-              child: ProductImageCarousel(images: images!),
+              child: ProductImageCarousel(
+                product: product!,
+                images: images!,
+                variant: variants![selectedIndex],
+              ),
             ),
             Container(
               padding: EdgeInsets.only(
