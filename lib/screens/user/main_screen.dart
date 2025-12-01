@@ -40,7 +40,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite_border),
-            label: 'Favorites',
+            label: 'Wishlist',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long),

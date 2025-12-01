@@ -69,7 +69,12 @@ class _App extends State<App> {
   Widget build(BuildContext context) {
     if (_checking) {
       return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: CircularProgressIndicator(color: Color(0xFFED1E28)),
+          ),
+        ),
       );
     }
 

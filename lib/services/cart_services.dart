@@ -16,6 +16,11 @@ class CartService {
     return cart;
   }
 
+  Future<Cart?> getCart(String userId) async {
+    final cart = await _repo.getCart(userId);
+    return cart;
+  }
+
   Future<void> addItem({
     required String userId,
     required String cartId,
@@ -31,10 +36,9 @@ class CartService {
 
     final existingItems = await _repo.getCartItems(userId, cartId);
     CartItem? existing = existingItems.cast<CartItem?>().firstWhere(
-  (item) => item!.productId == productId && item.variantId == variantId,
-  orElse: () => null,
-);
-
+      (item) => item!.productId == productId && item.variantId == variantId,
+      orElse: () => null,
+    );
 
     if (existing != null) {
       // Update jumlah

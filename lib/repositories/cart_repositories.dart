@@ -21,6 +21,14 @@ class CartRepository {
     await _cartCollection(userId).doc(cart.cartId).set(cart.toFirestore());
   }
 
+  Future<Cart> getCart(String userId) async {
+    final snapshot = await _cartCollection(userId).get();
+
+    final doc = snapshot.docs.first;
+
+    return Cart.fromFirestore(doc.data(), doc.id);
+  }
+
   // Add new cart item
   Future<void> addCartItem(String userId, String cartId, CartItem item) async {
     await _cartItemsCollection(

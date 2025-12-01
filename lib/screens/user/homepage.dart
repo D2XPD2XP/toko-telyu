@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_category.dart';
 import 'package:toko_telyu/models/product_image.dart';
+import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/services/product_category_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/category_circle.dart';
 import 'package:toko_telyu/widgets/product_card.dart';
 import 'package:toko_telyu/widgets/top_navbar.dart';
@@ -18,11 +20,13 @@ class Homepage extends StatefulWidget {
 }
 
 class _Homepage extends State<Homepage> {
+  final UserService _userService = UserService();
   final ProductService _productService = ProductService();
   final ProductCategoryService _productCategoryService =
       ProductCategoryService();
-  List<ProductCategory> categories = [];
-  List<Product> products = [];
+  User? user;
+  List<ProductCategory>? categories;
+  List<Product>? products;
   Map<String, List<ProductImage>> productImages = {};
 
   @override
@@ -32,9 +36,10 @@ class _Homepage extends State<Homepage> {
   }
 
   Future<void> _loadData() async {
+    user = await _userService.loadUser();
     categories = await _productCategoryService.getCategories();
-    products = await _productService.getAllProducts(categories);
-    for (var p in products) {
+    products = await _productService.getAllProducts(categories!);
+    for (var p in products!) {
       productImages[p.productId] = await _productService.getImages(p.productId);
     }
     setState(() {});
@@ -54,72 +59,83 @@ class _Homepage extends State<Homepage> {
           ),
           IconButton(
             icon: Icon(Icons.shopping_cart_outlined, color: Color(0xFFED1E28)),
-            onPressed: () {
-              print(products.length);
-            },
+            onPressed: () {},
           ),
           SizedBox(width: 8),
         ],
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 20, horizontal: 18),
-                  padding: EdgeInsets.all(8),
-                  width: 385,
-                  height: 155,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        blurRadius: 2,
-                        offset: Offset(0, 3),
+      body: user != null
+          ? CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 18,
+                        ),
+                        padding: EdgeInsets.all(8),
+                        width: 385,
+                        height: 155,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              blurRadius: 2,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Image(
+                          image: AssetImage('assets/promo_toktel.png'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: categories!.length,
+                          itemBuilder: (context, index) {
+                            return CategoryCircle(category: categories![index]);
+                          },
+                        ),
                       ),
                     ],
                   ),
-                  child: Image(
-                    image: AssetImage('assets/promo_toktel.png'),
-                    fit: BoxFit.cover,
-                  ),
                 ),
-                SizedBox(
-                  height: 100,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: categories.length,
-                    itemBuilder: (context, index) {
-                      return CategoryCircle(category: categories[index]);
-                    },
+                SliverPadding(
+                  padding: EdgeInsets.only(left: 18, right: 18, bottom: 18),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 25,
+                      crossAxisSpacing: 25,
+                      childAspectRatio: 2 / 2.65,
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final product = products![index];
+                      if (product.stock > 0) {
+                        final firstImage =
+                            productImages[product.productId]!.isNotEmpty
+                            ? productImages[product.productId]![0]
+                            : null;
+                        return ProductCard(
+                          user: user!,
+                          product: product,
+                          image: firstImage,
+                        );
+                      }
+                      return null;
+                    }, childCount: products!.length),
                   ),
                 ),
               ],
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.only(left: 18, right: 18, bottom: 18),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 25,
-                crossAxisSpacing: 25,
-                childAspectRatio: 2 / 2.65,
-              ),
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final product = products[index];
-                final firstImage = productImages[product.productId]!.isNotEmpty
-                    ? productImages[product.productId]![0]
-                    : null;
-                return ProductCard(product: product, image: firstImage);
-              }, childCount: products.length),
-            ),
-          ),
-        ],
-      ),
+            )
+          : Center(child: CircularProgressIndicator(color: Color(0xFFED1E28))),
     );
   }
 }

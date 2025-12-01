@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 
 class WishlistCard extends StatelessWidget {
   final String productName;
-  final String productImage;
+  final ProductImage? productImage;
   final String variant;
   final double price;
 
@@ -51,7 +52,7 @@ class WishlistCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Image.asset(productImage, fit: BoxFit.contain),
+            child: Image.network(productImage!.imageUrl, fit: BoxFit.contain),
           ),
           const SizedBox(width: 12),
 

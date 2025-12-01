@@ -13,11 +13,16 @@ class WishlistService {
     return wishlist;
   }
 
+  Future<Wishlist> getWishlist(String userId) async {
+    final wishlist = await _repo.getWishlist(userId);
+    return wishlist;
+  }
+
   Future<void> addItem({
     required String userId,
     required String wishlistId,
     required String productId,
-    required String variantId,
+    required String? variantId,
   }) async {
     final existingItems = await _repo.getWishlistItems(userId, wishlistId);
 
@@ -48,5 +53,20 @@ class WishlistService {
 
   Future<void> deleteWishlist(String userId, String wishlistId) async {
     await _repo.deleteWishlist(userId, wishlistId);
+  }
+
+  bool isWishlisted(
+    String productId,
+    String? variantId,
+    List<WishlistItem> wishlistItems,
+  ) {
+    if (variantId == null) {
+      return wishlistItems.any(
+      (w) => w.productId == productId
+    );
+    }
+    return wishlistItems.any(
+      (w) => w.productId == productId && w.variantId == variantId,
+    );
   }
 }
