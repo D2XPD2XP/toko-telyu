@@ -48,9 +48,10 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
 
       wishlistCard.add(
         WishlistCard(
+          productId : product.productId,
           productName: product.productName,
           productImage: images[0],
-          variant: variant.optionName,
+          variant: variant,
           price: product.price,
         ),
       );
@@ -95,47 +96,52 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
         ],
       ),
 
-      body: Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TopNavbar(onChanged: () {}, text: "SEARCH PRODUCT"),
-            const SizedBox(height: 20),
-            // Header Jumlah Item
-            Text(
-              wishlistItem!.isNotEmpty ? "${wishlistItem!.length} Item" : "",
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+      body: RefreshIndicator(
+        backgroundColor: Colors.white,
+        color: Color(0xFFED1E28),
+        onRefresh: _loadData,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TopNavbar(onChanged: () {}, text: "SEARCH PRODUCT"),
+              const SizedBox(height: 20),
+              // Header Jumlah Item
+              Text(
+                wishlistItem!.isNotEmpty ? "${wishlistItem!.length} Item" : "",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            wishlistItem!.isNotEmpty
-                ? Expanded(
-                  child: ListView.builder(
-                      itemBuilder: (context, index) {
-                        return wishlistCard[index];
-                      },
-                      itemCount: wishlistItem!.length,
-                    ),
-                )
-                : Container(
-                    padding: EdgeInsets.symmetric(
-                      vertical: 150,
-                      horizontal: 15,
-                    ),
-                    child: Text(
-                      "Oops, there's no wishlisted product!",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFFED1E28),
+              const SizedBox(height: 16),
+              wishlistItem!.isNotEmpty
+                  ? Expanded(
+                      child: ListView.builder(
+                        itemBuilder: (context, index) {
+                          return wishlistCard[index];
+                        },
+                        itemCount: wishlistItem!.length,
+                      ),
+                    )
+                  : Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 150,
+                        horizontal: 15,
+                      ),
+                      child: Text(
+                        "Oops, there's no wishlisted product!",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFFED1E28),
+                        ),
                       ),
                     ),
-                  ),
-          ],
+            ],
+          ),
         ),
       ),
     );
