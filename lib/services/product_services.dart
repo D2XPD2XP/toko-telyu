@@ -15,7 +15,6 @@ class ProductService {
   Future<Product> createProduct(
       String name,
       double price,
-      int stock,
       String description,
       ProductCategory category) async {
 
@@ -25,7 +24,6 @@ class ProductService {
       id,
       name,
       price,
-      stock,
       description,
       category,
     );
@@ -107,6 +105,14 @@ class ProductService {
 
   Future<void> deleteVariant(String productId, String variantId) async {
     await _repo.deleteVariant(productId, variantId);
+  }
+
+  Future<bool> isAvailable(String productId) async {
+    final variants = await getVariants(productId);
+
+    return variants.any(
+      (v) => v.stock > 0,
+    );
   }
 }
 

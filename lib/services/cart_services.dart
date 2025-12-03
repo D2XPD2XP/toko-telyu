@@ -1,3 +1,4 @@
+import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/repositories/cart_repositories.dart';
 import 'package:toko_telyu/repositories/product_repositories.dart';
 import 'package:uuid/uuid.dart';
@@ -25,18 +26,18 @@ class CartService {
     required String userId,
     required String cartId,
     required String productId,
-    required String variantId,
+    required ProductVariant variant,
     required int amount,
   }) async {
     final product = await _productRepo.getProduct(productId);
 
-    if (product.stock < amount) {
+    if (variant.stock < amount) {
       throw Exception("Stock tidak cukup");
     }
 
     final existingItems = await _repo.getCartItems(userId, cartId);
     CartItem? existing = existingItems.cast<CartItem?>().firstWhere(
-      (item) => item!.productId == productId && item.variantId == variantId,
+      (item) => item!.productId == productId && item.variantId == variant.variantId,
       orElse: () => null,
     );
 
@@ -60,7 +61,7 @@ class CartService {
       amount,
       subtotal,
       productId,
-      variantId,
+      variant.variantId,
     );
 
     await _repo.addCartItem(userId, cartId, item);

@@ -143,9 +143,7 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                   Text(
-                    product!.category.isFittable && variants!.isNotEmpty
-                        ? 'Stok: ${variants![selectedIndex].stock}'
-                        : 'Stok: ${product!.stock}',
+                    'Stok: ${variants![selectedIndex].stock}',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w300,

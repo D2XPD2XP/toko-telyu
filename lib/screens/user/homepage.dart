@@ -28,6 +28,7 @@ class _Homepage extends State<Homepage> {
   List<ProductCategory>? categories;
   List<Product>? products;
   Map<String, List<ProductImage>> productImages = {};
+  Map<String, bool> availability = {};
 
   @override
   void initState() {
@@ -41,6 +42,11 @@ class _Homepage extends State<Homepage> {
     products = await _productService.getAllProducts(categories!);
     for (var p in products!) {
       productImages[p.productId] = await _productService.getImages(p.productId);
+    }
+    for (final v in products!) {
+      availability[v.productId] = await _productService.isAvailable(
+        v.productId,
+      );
     }
     setState(() {});
   }
@@ -65,75 +71,84 @@ class _Homepage extends State<Homepage> {
         ],
       ),
       body: user != null
-          ? CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      Container(
-                        margin: EdgeInsets.symmetric(
-                          vertical: 20,
-                          horizontal: 18,
+          ? RefreshIndicator(
+              backgroundColor: Colors.white,
+              color: Color(0xFFED1E28),
+              onRefresh: _loadData,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        Container(
+                          margin: EdgeInsets.symmetric(
+                            vertical: 20,
+                            horizontal: 18,
+                          ),
+                          padding: EdgeInsets.all(8),
+                          width: 385,
+                          height: 155,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                blurRadius: 2,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Image(
+                            image: AssetImage('assets/promo_toktel.png'),
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        padding: EdgeInsets.all(8),
-                        width: 385,
-                        height: 155,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              blurRadius: 2,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
+                        SizedBox(
+                          height: 100,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categories!.length,
+                            itemBuilder: (context, index) {
+                              return CategoryCircle(
+                                category: categories![index],
+                              );
+                            },
+                          ),
                         ),
-                        child: Image(
-                          image: AssetImage('assets/promo_toktel.png'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 100,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: categories!.length,
-                          itemBuilder: (context, index) {
-                            return CategoryCircle(category: categories![index]);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.only(left: 18, right: 18, bottom: 18),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 25,
-                      crossAxisSpacing: 25,
-                      childAspectRatio: 2 / 2.65,
+                      ],
                     ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final product = products![index];
-                      if (product.stock > 0) {
-                        final firstImage =
-                            productImages[product.productId]!.isNotEmpty
-                            ? productImages[product.productId]![0]
-                            : null;
-                        return ProductCard(
-                          user: user!,
-                          product: product,
-                          image: firstImage,
-                        );
-                      }
-                      return null;
-                    }, childCount: products!.length),
                   ),
-                ),
-              ],
+                  SliverPadding(
+                    padding: EdgeInsets.only(left: 18, right: 18, bottom: 18),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 25,
+                        crossAxisSpacing: 25,
+                        childAspectRatio: 2 / 2.65,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final product = products![index];
+                        final available =
+                            availability[product.productId] ?? false;
+                        if (available) {
+                          final firstImage =
+                              productImages[product.productId]!.isNotEmpty
+                              ? productImages[product.productId]![0]
+                              : null;
+                          return ProductCard(
+                            user: user!,
+                            product: product,
+                            image: firstImage,
+                          );
+                        }
+                        return null;
+                      }, childCount: products!.length),
+                    ),
+                  ),
+                ],
+              ),
             )
           : Center(child: CircularProgressIndicator(color: Color(0xFFED1E28))),
     );
