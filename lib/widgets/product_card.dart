@@ -60,14 +60,15 @@ class _ProductCardState extends State<ProductCard> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) =>
                 ProductDetailsScreen(productId: widget.product.productId),
           ),
         );
+        loadWishlist();
       },
       borderRadius: BorderRadius.circular(15),
       child: Container(
