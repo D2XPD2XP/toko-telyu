@@ -4,6 +4,8 @@ import 'package:toko_telyu/widgets/transaction_card.dart';
 import 'package:toko_telyu/screens/user/order_detail_screen.dart';
 import 'package:toko_telyu/screens/user/track_order_screen.dart';
 import 'package:toko_telyu/widgets/top_navbar.dart';
+import 'package:toko_telyu/screens/user/cart_screen.dart';
+import 'package:toko_telyu/screens/user/chatbot_screen.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({Key? key}) : super(key: key);
@@ -38,14 +40,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
           actions: [
             IconButton(
               icon: Icon(Icons.chat_bubble_outline, color: Color(0xFFED1E28)),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChatbotScreen(),
+                  ),
+                );
+              },
             ),
             IconButton(
               icon: Icon(
                 Icons.shopping_cart_outlined,
                 color: Color(0xFFED1E28),
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CartScreen()),
+                );
+              },
             ),
             SizedBox(width: 8),
           ],
