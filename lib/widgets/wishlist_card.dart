@@ -148,7 +148,7 @@ class WishlistCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                         child: Text(
-                          "+ Keranjang",
+                          "+ Add to Cart",
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: const Color(0xFFED1E28),
