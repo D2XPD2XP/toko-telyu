@@ -1,3 +1,5 @@
+import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/widgets/wishlist_card.dart';
 import 'package:uuid/uuid.dart';
 import '../models/wishlist.dart';
 import '../models/wishlist_item.dart';
@@ -68,5 +70,48 @@ class WishlistService {
     return wishlistItems.any(
       (w) => w.productId == productId && w.variantId == variantId,
     );
+  }
+
+  Future<List<WishlistCard>> loadWishlistCards(
+    List<WishlistItem> wishlistItems,
+    ProductService productService,
+  ) async {
+    final List<WishlistCard> wishlistCards = [];
+
+    for (var item in wishlistItems) {
+      final product = await productService.getProduct(item.productId);
+      final images = await productService.getImages(item.productId);
+      final variants = await productService.getVariants(item.productId);
+      final variant = variants.firstWhere((v) => item.variantId == v.variantId);
+
+      wishlistCards.add(
+        WishlistCard(
+          productId: product.productId,
+          productName: product.productName,
+          productImage: images[0],
+          variant: variant,
+          price: product.price,
+        ),
+      );
+    }
+
+    return wishlistCards;
+  } 
+
+  Future<List<WishlistItem>> searchWishlistItems(
+    String query,
+    List<WishlistItem> wishlistItems,
+    ProductService productService,
+  ) async {
+    final List<WishlistItem> filteredItems = [];
+
+    for (final item in wishlistItems) {
+      final product = await productService.getProduct(item.productId);
+      if (product.productName.toLowerCase().contains(query.toLowerCase())) {
+        filteredItems.add(item);
+      }
+    }
+
+    return filteredItems;
   }
 }

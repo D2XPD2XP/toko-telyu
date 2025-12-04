@@ -69,6 +69,7 @@ class _ProductScreenState extends State<ProductScreen> {
         title: TopNavbar(
           onSubmitted: handleSearchSubmitted,
           text: widget.query.toUpperCase(),
+          onchanged: false,
         ),
         actions: [
           IconButton(

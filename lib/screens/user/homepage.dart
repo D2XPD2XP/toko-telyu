@@ -64,11 +64,9 @@ class _Homepage extends State<Homepage> {
   void handleSearchSubmitted(String value) {
     if (value.isNotEmpty) {
       Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductScreen(query: value,),
-      ),
-    );
+        context,
+        MaterialPageRoute(builder: (context) => ProductScreen(query: value)),
+      );
     }
   }
 
@@ -78,7 +76,11 @@ class _Homepage extends State<Homepage> {
       backgroundColor: Color(0xFFEEEEEE),
       appBar: AppBar(
         backgroundColor: Color(0xFFEEEEEE),
-        title: TopNavbar(onSubmitted: handleSearchSubmitted, text: 'SEARCH PRODUCT'),
+        title: TopNavbar(
+          onSubmitted: handleSearchSubmitted,
+          text: 'SEARCH PRODUCT',
+          onchanged: false,
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.chat_bubble_outline, color: Color(0xFFED1E28)),

@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
 class TopNavbar extends StatefulWidget {
-  const TopNavbar({super.key, required this.onSubmitted, required this.text});
+  const TopNavbar({
+    super.key,
+    required this.onSubmitted,
+    required this.text,
+    required this.onchanged,
+  });
   final void Function(String) onSubmitted;
   final String text;
+  final bool onchanged;
 
   @override
   State<TopNavbar> createState() => _TopNavbarState();
@@ -38,8 +44,13 @@ class _TopNavbarState extends State<TopNavbar> {
         controller: _controller,
         onSubmitted: (value) {
           widget.onSubmitted(value);
-          _controller.clear(); // <- clear input so hintText shows again
+          _controller.clear();
         },
+        onChanged: widget.onchanged
+            ? (value) {
+                widget.onSubmitted(value);
+              }
+            : null,
         decoration: InputDecoration(
           hintText: widget.text,
           hintStyle: TextStyle(color: Color(0xFF777777), fontSize: 10),

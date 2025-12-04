@@ -35,6 +35,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
             },
             text: "SEARCH TRANSACTION",
+            onchanged: true,
           ),
 
           actions: [
