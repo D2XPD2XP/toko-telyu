@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/models/wishlist.dart';
 import 'package:toko_telyu/models/wishlist_item.dart';
+import 'package:toko_telyu/screens/user/cart_screen.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/services/wishlist_services.dart';
@@ -26,6 +27,7 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
   Wishlist? wishlist;
   List<WishlistCard> wishlistCard = [];
   List<WishlistItem>? wishlistItem;
+  String query = "";
 
   @override
   void initState() {
@@ -36,27 +38,23 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
   Future<void> _loadData() async {
     user = await _userService.loadUser();
     wishlist = await _wishlistService.getWishlist(user!.userId);
-    wishlistItem = await _wishlistService.getItems(
-      user!.userId,
-      wishlist!.wishlistId!,
+    wishlistItem = query.isEmpty
+        ? await _wishlistService.getItems(user!.userId, wishlist!.wishlistId!)
+        : await _wishlistService.searchWishlistItems(
+            query,
+            wishlistItem!,
+            _productService,
+          );
+    wishlistCard = await _wishlistService.loadWishlistCards(
+      wishlistItem!,
+      _productService,
     );
-    for (var item in wishlistItem!) {
-      final product = await _productService.getProduct(item.productId);
-      final images = await _productService.getImages(item.productId);
-      final variants = await _productService.getVariants(item.productId);
-      final variant = variants.firstWhere((v) => item.variantId == v.variantId);
-
-      wishlistCard.add(
-        WishlistCard(
-          productId : product.productId,
-          productName: product.productName,
-          productImage: images[0],
-          variant: variant,
-          price: product.price,
-        ),
-      );
-    }
     setState(() {});
+  }
+
+  void _updateQuery(String newQuery) {
+    query = newQuery;
+    _loadData();
   }
 
   @override
@@ -90,7 +88,12 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
               Icons.shopping_cart_outlined,
               color: Color(0xFFED1E28),
             ),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
@@ -99,13 +102,20 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
       body: RefreshIndicator(
         backgroundColor: Colors.white,
         color: Color(0xFFED1E28),
-        onRefresh: _loadData,
+        onRefresh: () {
+          query = "";
+          return _loadData();
+        },
         child: Container(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TopNavbar(onChanged: () {}, text: "SEARCH PRODUCT"),
+              TopNavbar(
+                onSubmitted: _updateQuery,
+                text: query.isEmpty ? "SEARCH PRODUCT" : query.toUpperCase(),
+                onchanged: true,
+              ),
               const SizedBox(height: 20),
               // Header Jumlah Item
               Text(

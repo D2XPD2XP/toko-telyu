@@ -4,26 +4,24 @@ import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_category.dart';
 import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/user.dart';
-import 'package:toko_telyu/screens/user/product_screen.dart';
 import 'package:toko_telyu/screens/user/cart_screen.dart';
 import 'package:toko_telyu/screens/user/chatbot_screen.dart';
 import 'package:toko_telyu/services/product_category_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
-import 'package:toko_telyu/widgets/category_circle.dart';
 import 'package:toko_telyu/widgets/product_card.dart';
 import 'package:toko_telyu/widgets/top_navbar.dart';
 
-class Homepage extends StatefulWidget {
-  const Homepage({super.key});
+class ProductScreen extends StatefulWidget {
+  const ProductScreen({super.key, required this.query});
+
+  final String query;
 
   @override
-  State<StatefulWidget> createState() {
-    return _Homepage();
-  }
+  State<ProductScreen> createState() => _ProductScreenState();
 }
 
-class _Homepage extends State<Homepage> {
+class _ProductScreenState extends State<ProductScreen> {
   final UserService _userService = UserService();
   final ProductService _productService = ProductService();
   final ProductCategoryService _productCategoryService =
@@ -40,12 +38,10 @@ class _Homepage extends State<Homepage> {
     _loadData();
   }
 
-  Future<void> _loadData({bool isCategory = false, int idx = 0}) async {
+  Future<void> _loadData() async {
     user = await _userService.loadUser();
     categories = await _productCategoryService.getCategories();
-    products = isCategory == false
-        ? await _productService.getAllProducts(categories!)
-        : await _productService.getProductByCategory(categories![idx]);
+    products = await _productService.searchProducts(widget.query, categories!);
     for (var p in products!) {
       productImages[p.productId] = await _productService.getImages(p.productId);
     }
@@ -57,17 +53,11 @@ class _Homepage extends State<Homepage> {
     setState(() {});
   }
 
-  void handleCategorySelected(int index) {
-    _loadData(isCategory: true, idx: index);
-  }
-
   void handleSearchSubmitted(String value) {
-    if (value.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ProductScreen(query: value)),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProductScreen(query: value)),
+    );
   }
 
   @override
@@ -78,7 +68,7 @@ class _Homepage extends State<Homepage> {
         backgroundColor: Color(0xFFEEEEEE),
         title: TopNavbar(
           onSubmitted: handleSearchSubmitted,
-          text: 'SEARCH PRODUCT',
+          text: widget.query.toUpperCase(),
           onchanged: false,
         ),
         actions: [
@@ -110,56 +100,13 @@ class _Homepage extends State<Homepage> {
               onRefresh: _loadData,
               child: CustomScrollView(
                 slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        Container(
-                          margin: EdgeInsets.symmetric(
-                            vertical: 20,
-                            horizontal: 18,
-                          ),
-                          padding: EdgeInsets.only(left: 10, top: 8, bottom: 8),
-                          width: 385,
-                          height: 155,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.4),
-                                blurRadius: 2,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Image(
-                            image: AssetImage('assets/promo_toktel.png'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        SizedBox(
-                          height: 100,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: categories!.length,
-                            itemBuilder: (context, index) {
-                              return CategoryCircle(
-                                idx: index,
-                                category: categories![index],
-                                onTap: handleCategorySelected,
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   products!.isNotEmpty
                       ? SliverPadding(
                           padding: EdgeInsets.only(
                             left: 18,
                             right: 18,
                             bottom: 18,
+                            top : 20
                           ),
                           sliver: SliverGrid(
                             gridDelegate:
@@ -199,7 +146,7 @@ class _Homepage extends State<Homepage> {
                                 vertical: 100.0,
                               ),
                               child: Text(
-                                "Oops, there's no product with this category!",
+                                "Oops, there's no product with this keyword!",
                                 style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w500,
