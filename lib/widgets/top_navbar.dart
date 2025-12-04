@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 
-class TopNavbar extends StatelessWidget{
-  const TopNavbar({super.key, required this.onChanged, required this.text});
-  final void Function() onChanged;
+class TopNavbar extends StatefulWidget {
+  const TopNavbar({super.key, required this.onSubmitted, required this.text});
+  final void Function(String) onSubmitted;
   final String text;
+
+  @override
+  State<TopNavbar> createState() => _TopNavbarState();
+}
+
+class _TopNavbarState extends State<TopNavbar> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,16 +27,21 @@ class TopNavbar extends StatelessWidget{
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 2,
-              offset: Offset(0, 3),
-            ),
-          ],
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 2,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: TextField(
+        controller: _controller,
+        onSubmitted: (value) {
+          widget.onSubmitted(value);
+          _controller.clear(); // <- clear input so hintText shows again
+        },
         decoration: InputDecoration(
-          hintText: text,
+          hintText: widget.text,
           hintStyle: TextStyle(color: Color(0xFF777777), fontSize: 10),
           prefixIcon: Icon(Icons.search, size: 20),
           border: InputBorder.none,

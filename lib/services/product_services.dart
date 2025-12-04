@@ -109,4 +109,19 @@ class ProductService {
 
     return variants.any((v) => v.stock > 0);
   }
+
+  // --------------------------
+  // SEARCH
+  // --------------------------
+
+  Future<List<Product>> searchProducts(String query, List<ProductCategory> categories) async {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return [];
+
+    final all = await getAllProducts(categories);
+    return all.where((p){
+      final name = (p.productName).toLowerCase();
+      return name.contains(q);
+    }).toList();
+  }
 }

@@ -48,7 +48,7 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
 
       wishlistCard.add(
         WishlistCard(
-          productId : product.productId,
+          productId: product.productId,
           productName: product.productName,
           productImage: images[0],
           variant: variant,
@@ -105,7 +105,7 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TopNavbar(onChanged: () {}, text: "SEARCH PRODUCT"),
+              TopNavbar(onSubmitted: (value) {}, text: "SEARCH PRODUCT"),
               const SizedBox(height: 20),
               // Header Jumlah Item
               Text(

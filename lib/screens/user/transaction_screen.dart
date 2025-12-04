@@ -31,8 +31,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
           titleSpacing: 16,
 
           title: TopNavbar(
-            onChanged: () {
-              // Logika pencarian transaksi bisa ditambahkan di sini nanti
+            onSubmitted: (value) {
+
             },
             text: "SEARCH TRANSACTION",
           ),
