@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_category.dart';
 import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/user.dart';
+import 'package:toko_telyu/screens/user/chatbot_screen.dart';
 import 'package:toko_telyu/services/product_category_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
@@ -36,10 +38,12 @@ class _Homepage extends State<Homepage> {
     _loadData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool isCategory = false, int idx = 0}) async {
     user = await _userService.loadUser();
     categories = await _productCategoryService.getCategories();
-    products = await _productService.getAllProducts(categories!);
+    products = isCategory == false
+        ? await _productService.getAllProducts(categories!)
+        : await _productService.getProductByCategory(categories![idx]);
     for (var p in products!) {
       productImages[p.productId] = await _productService.getImages(p.productId);
     }
@@ -49,6 +53,10 @@ class _Homepage extends State<Homepage> {
       );
     }
     setState(() {});
+  }
+
+  void handleCategorySelected(int index) {
+    _loadData(isCategory: true, idx: index);
   }
 
   @override
@@ -61,7 +69,12 @@ class _Homepage extends State<Homepage> {
         actions: [
           IconButton(
             icon: Icon(Icons.chat_bubble_outline, color: Color(0xFFED1E28)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+              );
+            },
           ),
           IconButton(
             icon: Icon(Icons.shopping_cart_outlined, color: Color(0xFFED1E28)),
@@ -111,7 +124,9 @@ class _Homepage extends State<Homepage> {
                             itemCount: categories!.length,
                             itemBuilder: (context, index) {
                               return CategoryCircle(
+                                idx: index,
                                 category: categories![index],
+                                onTap: handleCategorySelected,
                               );
                             },
                           ),
@@ -119,34 +134,62 @@ class _Homepage extends State<Homepage> {
                       ],
                     ),
                   ),
-                  SliverPadding(
-                    padding: EdgeInsets.only(left: 18, right: 18, bottom: 18),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 25,
-                        crossAxisSpacing: 25,
-                        childAspectRatio: 2 / 2.65,
-                      ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final product = products![index];
-                        final available =
-                            availability[product.productId] ?? false;
-                        if (available) {
-                          final firstImage =
-                              productImages[product.productId]!.isNotEmpty
-                              ? productImages[product.productId]![0]
-                              : null;
-                          return ProductCard(
-                            user: user!,
-                            product: product,
-                            image: firstImage,
-                          );
-                        }
-                        return null;
-                      }, childCount: products!.length),
-                    ),
-                  ),
+                  products!.isNotEmpty
+                      ? SliverPadding(
+                          padding: EdgeInsets.only(
+                            left: 18,
+                            right: 18,
+                            bottom: 18,
+                          ),
+                          sliver: SliverGrid(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 25,
+                                  crossAxisSpacing: 25,
+                                  childAspectRatio: 2 / 2.65,
+                                ),
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final product = products![index];
+                              final available =
+                                  availability[product.productId] ?? false;
+                              if (available) {
+                                final firstImage =
+                                    productImages[product.productId]!.isNotEmpty
+                                    ? productImages[product.productId]![0]
+                                    : null;
+                                return ProductCard(
+                                  user: user!,
+                                  product: product,
+                                  image: firstImage,
+                                );
+                              }
+                              return null;
+                            }, childCount: products!.length),
+                          ),
+                        )
+                      : SliverToBoxAdapter(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25.0,
+                                vertical: 100.0,
+                              ),
+                              child: Text(
+                                "Oops, there's no product with this category!",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFFED1E28),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
                 ],
               ),
             )

@@ -13,20 +13,14 @@ class ProductService {
   // --------------------------
 
   Future<Product> createProduct(
-      String name,
-      double price,
-      String description,
-      ProductCategory category) async {
-
+    String name,
+    double price,
+    String description,
+    ProductCategory category,
+  ) async {
     final id = const Uuid().v4();
 
-    final product = Product(
-      id,
-      name,
-      price,
-      description,
-      category,
-    );
+    final product = Product(id, name, price, description, category);
 
     await _repo.createProduct(product);
     return product;
@@ -36,20 +30,20 @@ class ProductService {
     return await _repo.getProduct(productId);
   }
 
-  Future<Product> getProductByCategory(String productId, ProductCategory category) async {
-    return await _repo.getProductByCategory(productId, category);
+  Future<List<Product>> getProductByCategory(ProductCategory category) async {
+    return await _repo.getProductByCategory(category);
   }
 
-
   Future<List<Product>> getAllProducts(List<ProductCategory> categories) async {
-    final categoriesMap = {
-      for (var c in categories) c.categoryId: c,
-    };
+    final categoriesMap = {for (var c in categories) c.categoryId: c};
 
     return await _repo.getAllProducts(categoriesMap);
   }
 
-  Future<void> updateProduct(String productId, Map<String, dynamic> updates) async {
+  Future<void> updateProduct(
+    String productId,
+    Map<String, dynamic> updates,
+  ) async {
     await _repo.updateProduct(productId, updates);
   }
 
@@ -79,11 +73,11 @@ class ProductService {
   // --------------------------
 
   Future<void> addVariant(
-      String productId,
-      String optionName,
-      int stock,
-      double additionalPrice) async {
-
+    String productId,
+    String optionName,
+    int stock,
+    double additionalPrice,
+  ) async {
     final variant = ProductVariant(
       const Uuid().v4(),
       optionName,
@@ -99,7 +93,10 @@ class ProductService {
   }
 
   Future<void> updateVariant(
-      String productId, String variantId, Map<String, dynamic> updates) async {
+    String productId,
+    String variantId,
+    Map<String, dynamic> updates,
+  ) async {
     await _repo.updateVariant(productId, variantId, updates);
   }
 
@@ -110,10 +107,6 @@ class ProductService {
   Future<bool> isAvailable(String productId) async {
     final variants = await getVariants(productId);
 
-    return variants.any(
-      (v) => v.stock > 0,
-    );
+    return variants.any((v) => v.stock > 0);
   }
 }
-
-

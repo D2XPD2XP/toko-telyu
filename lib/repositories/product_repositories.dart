@@ -7,16 +7,19 @@ import '../models/product_category.dart';
 
 class ProductRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final ProductCategoryRepository _categoryRepository = ProductCategoryRepository();
+  final ProductCategoryRepository _categoryRepository =
+      ProductCategoryRepository();
 
   CollectionReference<Map<String, dynamic>> get _productCollection =>
       _firestore.collection('product');
 
-  CollectionReference<Map<String, dynamic>> _imageCollection(String productId) =>
-      _productCollection.doc(productId).collection('product_images');
+  CollectionReference<Map<String, dynamic>> _imageCollection(
+    String productId,
+  ) => _productCollection.doc(productId).collection('product_images');
 
-  CollectionReference<Map<String, dynamic>> _variantCollection(String productId) =>
-      _productCollection.doc(productId).collection('product_variant');
+  CollectionReference<Map<String, dynamic>> _variantCollection(
+    String productId,
+  ) => _productCollection.doc(productId).collection('product_variant');
 
   // --------------------------
   // PRODUCT
@@ -29,17 +32,21 @@ class ProductRepository {
   Future<Product> getProduct(String productId) async {
     final doc = await _productCollection.doc(productId).get();
 
-    final category =
-        await _categoryRepository.getCategory(doc.data()!['category_id']); 
+    final category = await _categoryRepository.getCategory(
+      doc.data()!['category_id'],
+    );
 
     final product = Product.fromFirestore(doc.data()!, doc.id, category);
 
     return product;
   }
-  
-  Future<Product> getProductByCategory(String productId, ProductCategory category) async {
-    final doc = await _productCollection.doc(productId).get();
-    return Product.fromFirestore(doc.data()!, doc.id, category);
+
+  Future<List<Product>> getProductByCategory(ProductCategory category) async {
+    final doc = await _productCollection.get();
+    return doc.docs
+        .where((d) => d.data()['category_id'] == category.categoryId)
+        .map((d) => Product.fromFirestore(d.data(), d.id, category))
+        .toList();
   }
 
   Future<List<Product>> getAllProducts(
@@ -59,7 +66,10 @@ class ProductRepository {
     return products;
   }
 
-  Future<void> updateProduct(String productId, Map<String, dynamic> updates) async {
+  Future<void> updateProduct(
+    String productId,
+    Map<String, dynamic> updates,
+  ) async {
     await _productCollection.doc(productId).update(updates);
   }
 
@@ -85,9 +95,9 @@ class ProductRepository {
   // --------------------------
 
   Future<void> addImage(String productId, ProductImage image) async {
-    await _imageCollection(productId)
-        .doc(image.imageId)
-        .set(image.toFirestore());
+    await _imageCollection(
+      productId,
+    ).doc(image.imageId).set(image.toFirestore());
   }
 
   Future<List<ProductImage>> getImages(String productId) async {
@@ -106,9 +116,9 @@ class ProductRepository {
   // --------------------------
 
   Future<void> addVariant(String productId, ProductVariant variant) async {
-    await _variantCollection(productId)
-        .doc(variant.variantId)
-        .set(variant.toFirestore());
+    await _variantCollection(
+      productId,
+    ).doc(variant.variantId).set(variant.toFirestore());
   }
 
   Future<List<ProductVariant>> getVariants(String productId) async {
@@ -119,7 +129,10 @@ class ProductRepository {
   }
 
   Future<void> updateVariant(
-      String productId, String variantId, Map<String, dynamic> updates) async {
+    String productId,
+    String variantId,
+    Map<String, dynamic> updates,
+  ) async {
     await _variantCollection(productId).doc(variantId).update(updates);
   }
 
@@ -127,5 +140,3 @@ class ProductRepository {
     await _variantCollection(productId).doc(variantId).delete();
   }
 }
-
-
