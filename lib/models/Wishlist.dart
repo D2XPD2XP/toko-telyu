@@ -17,4 +17,3 @@ class Wishlist {
   void setWishlistId(String? id) => _wishlistId = id;
   void setUserId(String? id) => _userId = id;
 }
-
