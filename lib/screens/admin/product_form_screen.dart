@@ -1,8 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/product.dart';
+import 'package:toko_telyu/models/product_image.dart';
+import 'package:toko_telyu/models/product_variant.dart';
+import 'package:uuid/uuid.dart';
 
 class ProductFormScreen extends StatefulWidget {
-  final Map<String, dynamic>? product;
+  final Product? product;
 
   const ProductFormScreen({super.key, this.product});
 
@@ -13,37 +18,61 @@ class ProductFormScreen extends StatefulWidget {
 class _ProductFormScreenState extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   late final TextEditingController nameC;
   late final TextEditingController priceC;
-  late final TextEditingController stockC;
   late final TextEditingController descC;
 
-  List<String> imageUrls = [];
-  List<String> imageVariants = [];
+  List<ProductImage> images = [];
+  List<ProductVariant> variants = [];
 
   @override
   void initState() {
     super.initState();
 
-    nameC = TextEditingController(text: widget.product?["name"] ?? "");
+    nameC = TextEditingController(text: widget.product?.productName ?? "");
     priceC = TextEditingController(
-      text: widget.product?["price"]?.toString() ?? "",
+      text: widget.product?.price.toString() ?? "",
     );
-    stockC = TextEditingController(
-      text: widget.product?["stock"]?.toString() ?? "",
-    );
-    descC = TextEditingController(text: widget.product?["description"] ?? "");
+    descC = TextEditingController(text: widget.product?.description ?? "");
 
-    imageUrls = List<String>.from(widget.product?["image_url"] ?? []);
-    imageVariants = List<String>.from(widget.product?["image_variant"] ?? []);
+    if (widget.product != null) {
+      _loadImages();
+      _loadVariants();
+    }
+  }
+
+  Future<void> _loadImages() async {
+    final snap = await FirebaseFirestore.instance
+        .collection("product")
+        .doc(widget.product!.productId)
+        .collection("product_images")
+        .get();
+
+    setState(() {
+      images = snap.docs
+          .map((e) => ProductImage.fromFirestore(e.data(), e.id))
+          .toList();
+    });
+  }
+
+  Future<void> _loadVariants() async {
+    final snap = await FirebaseFirestore.instance
+        .collection("product")
+        .doc(widget.product!.productId)
+        .collection("product_variant")
+        .get();
+
+    setState(() {
+      variants = snap.docs
+          .map((e) => ProductVariant.fromFirestore(e.data(), e.id))
+          .toList();
+    });
   }
 
   @override
   void dispose() {
     nameC.dispose();
     priceC.dispose();
-    stockC.dispose();
     descC.dispose();
     super.dispose();
   }
@@ -89,44 +118,28 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // STOCK
-              _FormField(
-                controller: stockC,
-                label: "Stock",
-                keyboard: TextInputType.number,
-                validator: (v) => v!.isEmpty ? "Stok wajib diisi" : null,
-              ),
-              const SizedBox(height: 16),
-
               // DESC
               _FormField(controller: descC, label: "Description", maxLines: 4),
-
               const SizedBox(height: 24),
 
-              // IMAGE URL SECTION
-              _ListSection(
-                title: "Product Image",
-                items: imageUrls,
-                onDelete: (item) => setState(() => imageUrls.remove(item)),
-                onAdd: () {
-                  // TODO: Tambah URL gambar
-                },
-                addLabel: "Add Image URL",
+              // IMAGES
+              _ImageListSection(
+                title: "Product Images",
+                items: images,
+                onDelete: (img) => setState(() => images.remove(img)),
+                onAdd: _addImageSheet,
               ),
 
-              const SizedBox(height: 24),
-
-              // VARIANT SECTION
-              _ListSection(
-                title: "Product Variant (color/size, etc.)",
-                items: imageVariants,
-                onDelete: (item) => setState(() => imageVariants.remove(item)),
-                onAdd: () {
-                  // TODO: Tambah variant
-                },
+              // VARIANTS
+              _ListSection<ProductVariant>(
+                title: "Product Variant (color/size)",
+                items: variants,
+                onDelete: (item) => setState(() => variants.remove(item)),
+                onAdd: _addVariantSheet,
                 addLabel: "Add Variant",
+                displayText: (v) =>
+                    "${v.optionName} - stock: ${v.stock} (+${v.additionalPrice})",
               ),
-
               const SizedBox(height: 40),
 
               // SAVE BUTTON
@@ -151,11 +164,234 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
-  void _saveProduct() {
+  // ==============================================================
+  // ADD IMAGE DIALOG
+  // ==============================================================
+  void _addImageSheet() {
+    final controller = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Add Image URL",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(hintText: "https://..."),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFED1E28),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                ),
+                onPressed: () {},
+                child: const Text(
+                  "Add Image",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==============================================================
+  // ADD VARIANT DIALOG
+  // ==============================================================
+  void _addVariantSheet() {
+    final nameC = TextEditingController();
+    final stockC = TextEditingController();
+    final addPriceC = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Add Variant",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: nameC,
+              decoration: const InputDecoration(
+                labelText: "Option Name",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: stockC,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Stock",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: addPriceC,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Additional Price",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFED1E28),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  if (nameC.text.isEmpty || stockC.text.isEmpty) return;
+
+                  final variant = ProductVariant(
+                    const Uuid().v4(),
+                    nameC.text,
+                    int.parse(stockC.text),
+                    double.tryParse(addPriceC.text) ?? 0,
+                  );
+
+                  setState(() => variants.add(variant));
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  "Add Variant",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==============================================================
+  // SAVE PRODUCT
+  // ==============================================================
+  Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // TODO: Simpan ke backend nanti
-    print("Saving product...");
+    final firestore = FirebaseFirestore.instance;
+
+    if (widget.product == null) {
+      // CREATE
+      final newId = const Uuid().v4();
+
+      await firestore.collection("product").doc(newId).set({
+        "product_name": nameC.text,
+        "price": double.parse(priceC.text),
+        "description": descC.text,
+        "category_id": widget.product?.category.categoryId ?? "",
+      });
+
+      // save images
+      for (var img in images) {
+        await firestore
+            .collection("product")
+            .doc(newId)
+            .collection("product_images")
+            .doc(img.imageId)
+            .set(img.toFirestore());
+      }
+
+      // save variants
+      for (var v in variants) {
+        await firestore
+            .collection("product")
+            .doc(newId)
+            .collection("product_variant")
+            .doc(v.variantId)
+            .set(v.toFirestore());
+      }
+    } else {
+      // UPDATE
+      final id = widget.product!.productId;
+
+      await firestore.collection("product").doc(id).update({
+        "product_name": nameC.text,
+        "price": double.parse(priceC.text),
+        "description": descC.text,
+      });
+
+      // replace images
+      final imgRef = firestore
+          .collection("product")
+          .doc(id)
+          .collection("product_images");
+      final oldImgs = await imgRef.get();
+      for (var d in oldImgs.docs) {
+        await d.reference.delete();
+      }
+      for (var img in images) {
+        await imgRef.doc(img.imageId).set(img.toFirestore());
+      }
+
+      // replace variants
+      final varRef = firestore
+          .collection("product")
+          .doc(id)
+          .collection("product_variant");
+      final oldVar = await varRef.get();
+      for (var d in oldVar.docs) {
+        await d.reference.delete();
+      }
+      for (var v in variants) {
+        await varRef.doc(v.variantId).set(v.toFirestore());
+      }
+    }
 
     Navigator.pop(context);
   }
@@ -207,15 +443,16 @@ class _FormField extends StatelessWidget {
 
 //
 // =======================================================================
-// REUSABLE LIST SECTION (image url / variant list)
+// REUSABLE LIST SECTION
 // =======================================================================
 //
-class _ListSection extends StatelessWidget {
+class _ListSection<T> extends StatelessWidget {
   final String title;
-  final List<String> items;
-  final Function(String) onDelete;
+  final List<T> items;
+  final Function(T) onDelete;
   final VoidCallback onAdd;
   final String addLabel;
+  final String Function(T) displayText;
 
   const _ListSection({
     required this.title,
@@ -223,6 +460,7 @@ class _ListSection extends StatelessWidget {
     required this.onDelete,
     required this.onAdd,
     required this.addLabel,
+    required this.displayText,
   });
 
   @override
@@ -243,36 +481,143 @@ class _ListSection extends StatelessWidget {
           const SizedBox(height: 12),
 
           ...items.map((item) {
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              margin: const EdgeInsets.only(bottom: 6),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: Text(displayText(item))),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => onDelete(item),
+                ),
+              ],
+            );
+          }).toList(),
+
+          OutlinedButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add),
+            label: Text(addLabel),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFED1E28),
+              side: const BorderSide(color: Color(0xFFED1E28)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImageListSection extends StatelessWidget {
+  final String title;
+  final List<ProductImage> items;
+  final Function(ProductImage) onDelete;
+  final VoidCallback onAdd;
+
+  const _ImageListSection({
+    required this.title,
+    required this.items,
+    required this.onDelete,
+    required this.onAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 12),
+
+          // ===========================
+          //     GRID IMAGE LAYOUT
+          // ===========================
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length + 1, // extra 1 for the add card
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3, // 3 per row (responsive)
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1,
+            ),
+            itemBuilder: (context, index) {
+              // "Add Image" button
+              if (index == items.length) {
+                return GestureDetector(
+                  onTap: onAdd,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.add, size: 40, color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+
+              final img = items[index];
+
+              // Image card
+              return Stack(
                 children: [
-                  Expanded(child: Text(item, overflow: TextOverflow.ellipsis)),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => onDelete(item),
+                  // IMAGE
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      img.imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image),
+                      ),
+                    ),
+                  ),
+
+                  // DELETE BUTTON (overlay top right)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.55),
+                        shape: BoxShape.circle,
+                      ),
+                      child: GestureDetector(
+                        onTap: () => onDelete(img),
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-              ),
-            );
-          }),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: Text(addLabel),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFED1E28),
-                side: const BorderSide(color: Color(0xFFED1E28)),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
