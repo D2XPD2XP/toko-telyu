@@ -1,6 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/repositories/cart_repositories.dart';
 import 'package:toko_telyu/repositories/product_repositories.dart';
+import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/widgets/cart_item_card.dart';
 import 'package:uuid/uuid.dart';
 import '../models/cart.dart';
 import '../models/cart_item.dart';
@@ -37,7 +40,8 @@ class CartService {
 
     final existingItems = await _repo.getCartItems(userId, cartId);
     CartItem? existing = existingItems.cast<CartItem?>().firstWhere(
-      (item) => item!.productId == productId && item.variantId == variant.variantId,
+      (item) =>
+          item!.productId == productId && item.variantId == variant.variantId,
       orElse: () => null,
     );
 
@@ -86,5 +90,37 @@ class CartService {
 
   Future<void> deleteCart(String userId, String cartId) async {
     await _repo.deleteCart(userId, cartId);
+  }
+
+  Future<List<CartItemCard>> loadCartCards(
+    String userId,
+    String cartId,
+    List<CartItem> cartItems,
+    ProductService productService,
+    VoidCallback onChanged
+  ) async {
+    final List<CartItemCard> cartItemCards = [];
+
+    for (var item in cartItems) {
+      final product = await productService.getProduct(item.productId);
+      final images = await productService.getImages(item.productId);
+      final variants = await productService.getVariants(item.productId);
+      final variant = variants.firstWhere((v) => item.variantId == v.variantId);
+
+      cartItemCards.add(
+        CartItemCard(
+          userId: userId,
+          cartId: cartId,
+          cartItemId: item.cartItemId!,
+          product: product,
+          productImage: images[0],
+          variant: variant,
+          quantity: item.amount,
+          onChanged: onChanged,
+        ),
+      );
+    }
+
+    return cartItemCards;
   }
 }

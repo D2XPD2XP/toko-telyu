@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/cart.dart';
+import 'package:toko_telyu/models/cart_item.dart';
+import 'package:toko_telyu/models/product_image.dart';
+import 'package:toko_telyu/models/user.dart';
+import 'package:toko_telyu/screens/user/wishlist_screen.dart';
+import 'package:toko_telyu/services/cart_services.dart';
+import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/cart_item_card.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 import 'package:toko_telyu/screens/user/checkout_screen.dart';
@@ -14,37 +22,62 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final Color primaryRed = const Color(0xFFED1E28);
   final Color bgGrey = const Color(0xFFF5F5F5);
+  final UserService _userService = UserService();
+  final ProductService _productService = ProductService();
+  final CartService _cartService = CartService();
+  User? user;
+  Cart? cart;
+  List<CartItem>? cartItems;
+  List<CartItemCard> cartCard = [];
+  Map<String, List<ProductImage>> productImages = {};
+  bool loading = true;
 
-  // State Dummy untuk Slicing
-  bool isAllSelected = false;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-  // Contoh data item cart
-  List<Map<String, dynamic>> cartItems = [
-    {
-      "id": 1,
-      "name": "Seragam Telkom - Merah",
-      "image": "assets/seragam_merah_telkom.png",
-      "variant": "S",
-      "price": 150000.0,
-      "quantity": 1,
-      "selected": true,
-    },
-  ];
+  Future<void> _loadData() async {
+    setState(() {
+      loading = true;
+    });
+    user = await _userService.loadUser();
+    cart = await _cartService.getCart(user!.userId);
+    cartItems = await _cartService.getItems(user!.userId, cart!.cartId!);
+    for (var p in cartItems!) {
+      productImages[p.productId] = await _productService.getImages(p.productId);
+    }
+    cartCard = await _cartService.loadCartCards(
+      user!.userId,
+      cart!.cartId!,
+      cartItems!,
+      _productService,
+      _loadData,
+    );
+    setState(() {
+      loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFED1E28)),
+        ),
+      );
+    }
+
     double totalPrice = 0;
-    int totalSelectedItems = 0;
-    for (var item in cartItems) {
-      if (item['selected']) {
-        totalPrice += (item['price'] * item['quantity']);
-        totalSelectedItems += 1;
-      }
+    for (var item in cartItems!) {
+      totalPrice += item.subtotal;
     }
 
     return Scaffold(
       backgroundColor: bgGrey,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -57,87 +90,61 @@ class _CartScreenState extends State<CartScreen> {
           "Cart",
           style: GoogleFonts.poppins(
             color: Colors.black,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
         ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.favorite_border, color: Colors.grey),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoritesScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.favorite_border, color: Color(0xFFED1E28)),
           ),
           const SizedBox(width: 10),
         ],
       ),
 
-      body: Column(
-        children: [
-          // --- HEADER SELEKSI ---
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            color: bgGrey,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "$totalSelectedItems Selected Items",
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black54,
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    // Logika Hapus
-                  },
-                  child: Text(
-                    "Remove",
+      body: RefreshIndicator(
+        backgroundColor: Colors.white,
+        color: Color(0xFFED1E28),
+        onRefresh: _loadData,
+        child: Column(
+          children: [
+            // --- HEADER SELEKSI ---
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: bgGrey,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "${cartItems!.length} Selected Items",
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: primaryRed,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          Expanded(
-            child: ListView.builder(
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                final item = cartItems[index];
-                return CartItemCard(
-                  productName: item['name'],
-                  productImage: item['image'],
-                  variant: item['variant'],
-                  price: item['price'],
-                  quantity: item['quantity'],
-                  isSelected: item['selected'],
-                  onCheckToggle: () {
-                    setState(() {
-                      item['selected'] = !item['selected'];
-                    });
-                  },
-                  onAdd: () {
-                    setState(() {
-                      item['quantity']++;
-                    });
-                  },
-                  onRemove: () {
-                    setState(() {
-                      if (item['quantity'] > 1) {
-                        item['quantity']--;
-                      }
-                    });
-                  },
-                );
-              },
+            Expanded(
+              child: ListView.builder(
+                itemCount: cartItems!.length,
+                itemBuilder: (context, index) {
+                  return cartCard[index];
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
 
       bottomNavigationBar: Container(
@@ -154,88 +161,53 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            // Checkbox All
-            InkWell(
-              onTap: () {
-                setState(() {
-                  isAllSelected = !isAllSelected;
-                  for (var item in cartItems) {
-                    item['selected'] = isAllSelected;
-                  }
-                });
-              },
-              child: Row(
+        child: loading == false
+            ? Row(
                 children: [
-                  Icon(
-                    isAllSelected
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank,
-                    color: isAllSelected ? primaryRed : Colors.grey,
+                  const Spacer(),
+
+                  FormattedPrice(
+                    price: totalPrice,
+                    size: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    "All",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.black54,
+
+                  const SizedBox(width: 15),
+
+                  // Button Buy
+                  SizedBox(
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CheckoutScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                      ),
+                      child: Text(
+                        "Buy(${cartItems!.length})",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
+              )
+            : Center(
+                child: CircularProgressIndicator(color: Color(0xFFED1E28)),
               ),
-            ),
-
-            const Spacer(),
-
-            // Total Price
-            FormattedPrice(
-              price: totalPrice,
-              size: 16,
-              fontWeight: FontWeight.bold,
-            ),
-
-            const SizedBox(width: 15),
-
-            // Button Buy
-            SizedBox(
-              height: 45,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (totalSelectedItems > 0) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CheckoutScreen(),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Pilih item terlebih dahulu"),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryRed,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                ),
-                child: Text(
-                  "Buy($totalSelectedItems)",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
