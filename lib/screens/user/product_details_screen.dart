@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/cart.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/product_variant.dart';
+import 'package:toko_telyu/models/user.dart';
+import 'package:toko_telyu/screens/user/account_screen.dart';
+import 'package:toko_telyu/screens/user/cart_screen.dart';
+import 'package:toko_telyu/services/cart_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 import 'package:toko_telyu/widgets/product_image_carousel.dart';
 import 'package:toko_telyu/widgets/variant_item.dart';
@@ -20,7 +26,11 @@ class ProductDetailsScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreen extends State<ProductDetailsScreen> {
+  final UserService _userService = UserService();
   final ProductService _productService = ProductService();
+  final CartService _cartService = CartService();
+  User? user;
+  Cart? cart;
   Product? product;
   List<ProductImage>? images;
   List<ProductVariant>? variants;
@@ -33,6 +43,8 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
   }
 
   Future<void> _loadData() async {
+    user = await _userService.loadUser();
+    cart = await _cartService.getCart(user!.userId);
     product = await _productService.getProduct(widget.productId);
     images = await _productService.getImages(widget.productId);
     if (product!.category.isFittable) {
@@ -63,12 +75,22 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.shopping_cart_outlined, color: Color(0xFFED1E28)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
+            },
           ),
           IconButton(
             iconSize: 28,
             icon: Icon(Icons.dehaze, color: Color(0xFFED1E28)),
-            onPressed: () {},
+            onPressed: () {
+               Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AccountScreen()),
+              );
+            },
           ),
           SizedBox(width: 10),
         ],
@@ -241,7 +263,15 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
             ),
             SizedBox(width: 11),
             InkWell(
-              onTap: () {},
+              onTap: () async {
+                await _cartService.addItem(
+                  userId: user!.userId,
+                  cartId: cart!.cartId!,
+                  productId: product!.productId,
+                  variant: variants![selectedIndex],
+                  amount: 1,
+                );
+              },
               child: Container(
                 width: 170,
                 height: 60,
