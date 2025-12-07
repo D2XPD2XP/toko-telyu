@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:toko_telyu/enums/shipping_status.dart';
+import 'package:toko_telyu/enums/transaction_status.dart';
 import 'package:toko_telyu/widgets/transaction_card.dart';
 import 'package:toko_telyu/screens/user/order_detail_screen.dart';
 import 'package:toko_telyu/screens/user/track_order_screen.dart';

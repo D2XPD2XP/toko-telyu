@@ -241,7 +241,9 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
         child: Row(
           children: [
             InkWell(
-              onTap: () {},
+              onTap: () async {
+                
+              },
               child: Container(
                 width: 170,
                 height: 60,

@@ -8,7 +8,6 @@ class OrderDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Warna utama
     const Color primaryRed = Color(0xFFED1E28);
     const Color bgGrey = Color(0xFFF5F5F5);
 
@@ -17,13 +16,11 @@ class OrderDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // ▼▼ UBAH JARAK DAN ICON DI SINI ▼▼
-        titleSpacing: 0, // Mengurangi jarak antara panah dan judul
+        titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        // ▲▲ -------------------------- ▲▲
         title: Text(
           "Order Details",
           style: GoogleFonts.poppins(
@@ -49,7 +46,6 @@ class OrderDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- SECTION 1: ORDER COMPLETED ---
             Container(
               color: Colors.white,
               margin: const EdgeInsets.only(top: 2),
@@ -104,10 +100,7 @@ class OrderDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
-
-            // --- SECTION 2: PRODUCT DETAILS ---
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
@@ -212,10 +205,7 @@ class OrderDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
-
-            // --- SECTION 3: PAYMENT DETAILS ---
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
@@ -261,10 +251,7 @@ class OrderDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
-
-            // --- SECTION 4: HELP (TOKTEL AI) ---
             Container(
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -279,7 +266,6 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   InkWell(
                     onTap: () {
                       Navigator.push(
@@ -316,12 +302,10 @@ class OrderDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 100),
           ],
         ),
       ),
-
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

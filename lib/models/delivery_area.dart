@@ -22,4 +22,20 @@ class DeliveryArea {
   void setDeliveryfee(double fee) {
     _deliveryFee = fee;
   }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'areaId': _areaId,
+      'areaName': _areaName,
+      'deliveryFee': _deliveryFee,
+    };
+  }
+  
+  static DeliveryArea fromFirestore(Map<String, dynamic> data) {
+    return DeliveryArea(
+      data['areaId'] as String,
+      data['areaName'] as String,
+      (data['deliveryFee'] as num).toDouble(),
+    );
+  }
 }

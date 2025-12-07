@@ -2,9 +2,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:toko_telyu/enums/role.dart';
+import 'package:toko_telyu/models/user.dart';
+import 'package:toko_telyu/screens/admin/main_admin_screen.dart';
 import 'package:toko_telyu/screens/authentication.dart';
 import 'package:toko_telyu/screens/user/main_screen.dart';
 import 'package:toko_telyu/services/firebase_options.dart';
+import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/connection_guard.dart';
 
 final _secureStorage = FlutterSecureStorage();
@@ -34,6 +38,8 @@ class App extends StatefulWidget {
 }
 
 class _App extends State<App> {
+  UserService userService = UserService();
+  User? user;
   bool _checking = true;
   bool _isLoggedIn = false;
 
@@ -52,6 +58,7 @@ class _App extends State<App> {
     final userId = await _secureStorage.read(key: _kUserIdKey);
 
     if (token != null && userId != null) {
+      user = await userService.loadUser();
       setState(() {
         _isLoggedIn = true;
       });
@@ -78,9 +85,17 @@ class _App extends State<App> {
       );
     }
 
+    if (!_isLoggedIn) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Authentication(),
+        builder: (context, child) => ConnectionGuard(child: child!),
+      );
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: _isLoggedIn ? MainScreen() : Authentication(),
+      home: user!.role == RoleEnum.USER ? MainScreen() : MainAdminScreen(),
       builder: (context, child) => ConnectionGuard(child: child!),
     );
   }
