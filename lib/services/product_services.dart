@@ -114,14 +114,49 @@ class ProductService {
   // SEARCH
   // --------------------------
 
-  Future<List<Product>> searchProducts(String query, List<ProductCategory> categories) async {
+  Future<List<Product>> searchProducts(
+    String query,
+    List<ProductCategory> categories,
+  ) async {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return [];
 
     final all = await getAllProducts(categories);
-    return all.where((p){
+    return all.where((p) {
       final name = (p.productName).toLowerCase();
       return name.contains(q);
     }).toList();
+  }
+
+  // --------------------------
+  // REPLACE IMAGES
+  // --------------------------
+  Future<void> replaceImages(
+    String productId,
+    List<ProductImage> newImages,
+  ) async {
+    final oldImages = await getImages(productId);
+    for (var img in oldImages) {
+      await deleteImage(productId, img.imageId);
+    }
+    for (var img in newImages) {
+      await _repo.addImage(productId, img);
+    }
+  }
+
+  // --------------------------
+  // REPLACE VARIANTS
+  // --------------------------
+  Future<void> replaceVariants(
+    String productId,
+    List<ProductVariant> newVariants,
+  ) async {
+    final oldVariants = await getVariants(productId);
+    for (var v in oldVariants) {
+      await deleteVariant(productId, v.variantId);
+    }
+    for (var v in newVariants) {
+      await _repo.addVariant(productId, v);
+    }
   }
 }

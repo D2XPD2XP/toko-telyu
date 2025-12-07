@@ -123,7 +123,9 @@ class _ProductScreenState extends State<ProductScreen> {
         onTap: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+            MaterialPageRoute(
+              builder: (_) => const ProductFormScreen(categories: []),
+            ),
           );
           _loadAll();
         },
@@ -270,7 +272,8 @@ class _ProductScreenState extends State<ProductScreen> {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ProductFormScreen(product: item),
+                    builder: (_) =>
+                        ProductFormScreen(product: item, categories: []),
                   ),
                 );
                 _loadAll();
