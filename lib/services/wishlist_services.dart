@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:toko_telyu/models/cart_item.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/widgets/wishlist_card.dart';
 import 'package:uuid/uuid.dart';
@@ -73,8 +75,12 @@ class WishlistService {
   }
 
   Future<List<WishlistCard>> loadWishlistCards(
+    String userId,
+    String cartId,
     List<WishlistItem> wishlistItems,
+    List<CartItem>? cartItems,
     ProductService productService,
+    VoidCallback onAdd,
   ) async {
     final List<WishlistCard> wishlistCards = [];
 
@@ -86,11 +92,15 @@ class WishlistService {
 
       wishlistCards.add(
         WishlistCard(
+          userId: userId,
+          cartId: cartId,
           productId: product.productId,
           productName: product.productName,
           productImage: images[0],
+          cartItems: cartItems,
           variant: variant,
           price: product.price,
+          onAdd: onAdd,
         ),
       );
     }

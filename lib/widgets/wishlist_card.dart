@@ -1,28 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/cart_item.dart';
 import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/screens/user/product_details_screen.dart';
+import 'package:toko_telyu/services/cart_services.dart';
+import 'package:toko_telyu/widgets/custom_dialog.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 
 class WishlistCard extends StatelessWidget {
+  final String userId;
+  final String cartId;
   final String productId;
   final String productName;
   final ProductImage? productImage;
   final ProductVariant variant;
+  final List<CartItem>? cartItems;
   final double price;
+  final VoidCallback onAdd;
 
   const WishlistCard({
     Key? key,
+    required this.userId,
+    required this.cartId,
     required this.productId,
     required this.productName,
     required this.productImage,
     required this.variant,
+    required this.cartItems,
     required this.price,
+    required this.onAdd,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    CartService cartService = CartService();
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
@@ -139,7 +151,35 @@ class WishlistCard extends StatelessWidget {
                     child: SizedBox(
                       height: 32,
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          int currentAmount = cartItems!.isNotEmpty
+                              ? cartService.currentItemAmount(
+                                  cartItems,
+                                  productId,
+                                  variant.variantId,
+                                )
+                              : 0;
+                          if (currentAmount + 1 <= variant.stock) {
+                            await cartService.addItem(
+                              userId: userId,
+                              cartId: cartId,
+                              productId: productId,
+                              variant: variant,
+                              amount: 1,
+                            );
+                            onAdd();
+                          } else {
+                            showDialog(
+                              context: context,
+                              builder: (context) => CustomDialog(
+                                ctx: context,
+                                message:
+                                    'This variant is not available. Please select another variant',
+                                title: "NOT AVAILABLE",
+                              ),
+                            );
+                          }
+                        },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFED1E28)),
                           shape: RoundedRectangleBorder(
@@ -148,7 +188,7 @@ class WishlistCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                         child: Text(
-                          "+ Add to Cart",
+                          variant.stock >= 1 ? "+ Add to Cart" : "SOLD OUT",
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: const Color(0xFFED1E28),

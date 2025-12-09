@@ -97,7 +97,7 @@ class CartService {
     String cartId,
     List<CartItem> cartItems,
     ProductService productService,
-    VoidCallback onChanged
+    VoidCallback onChanged,
   ) async {
     final List<CartItemCard> cartItemCards = [];
 
@@ -122,5 +122,23 @@ class CartService {
     }
 
     return cartItemCards;
+  }
+
+  int currentItemAmount(
+    List<CartItem>? cartItems,
+    String productId,
+    String variantId,
+  ) {
+    if (cartItems == null || cartItems.isEmpty) {
+      return 0;
+    }
+    try {
+      CartItem item = cartItems.firstWhere(
+        (c) => c.productId == productId && c.variantId == variantId,
+      );
+      return item.amount;
+    } catch (e) {
+      return 0;
+    }
   }
 }
