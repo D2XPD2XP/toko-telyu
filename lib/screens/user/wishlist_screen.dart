@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/cart.dart';
+import 'package:toko_telyu/models/cart_item.dart';
 import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/models/wishlist.dart';
 import 'package:toko_telyu/models/wishlist_item.dart';
 import 'package:toko_telyu/screens/user/cart_screen.dart';
+import 'package:toko_telyu/services/cart_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/services/wishlist_services.dart';
@@ -23,11 +26,15 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
   final UserService _userService = UserService();
   final ProductService _productService = ProductService();
   final WishlistService _wishlistService = WishlistService();
+  final CartService _cartService = CartService();
   User? user;
   Wishlist? wishlist;
+  Cart? cart;
+  List<CartItem>? cartItems;
   List<WishlistCard> wishlistCard = [];
   List<WishlistItem>? wishlistItem;
   String query = "";
+  bool loading = false;
 
   @override
   void initState() {
@@ -36,6 +43,9 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _loadData() async {
+    setState(() {
+      loading = true;
+    });
     user = await _userService.loadUser();
     wishlist = await _wishlistService.getWishlist(user!.userId);
     wishlistItem = query.isEmpty
@@ -45,11 +55,19 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
             wishlistItem!,
             _productService,
           );
+    cart = await _cartService.getCart(user!.userId);
+    cartItems = await _cartService.getItems(user!.userId, cart!.cartId!);
     wishlistCard = await _wishlistService.loadWishlistCards(
+      user!.userId,
+      cart!.cartId!,
       wishlistItem!,
+      cartItems,
       _productService,
+      _loadData,
     );
-    setState(() {});
+    setState(() {
+      loading = false;
+    });
   }
 
   void _updateQuery(String newQuery) {
@@ -59,7 +77,7 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (user == null) {
+    if (loading) {
       return Scaffold(
         backgroundColor: Colors.white,
         body: Center(

@@ -46,12 +46,6 @@ class _PersonalInfoState extends State<PersonalInfo> {
         elevation: 0, // Tanpa bayangan di AppBar sesuai gambar referensi
         titleSpacing: 0,
         leading: IconButton(
-          // Gunakan arrow_back (panah standar) atau arrow_back_ios sesuai selera konsistensi
-          // Berdasarkan gambar referensi WhatsApp Image, terlihat seperti arrow_back biasa
-          // Tapi untuk konsistensi dengan Checkout, kita bisa pakai arrow_back_ios
-          // Mari kita pakai arrow_back untuk mirip persis gambar referensi,
-          // ATAU ganti ke arrow_back_ios jika ingin konsisten dengan Checkout.
-          // Sesuai request "arrow back konsisten", saya pakai arrow_back_ios.
           icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
