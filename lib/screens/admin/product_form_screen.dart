@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_category.dart';
 import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/product_variant.dart';
+import 'package:toko_telyu/services/cloudinary_service.dart';
 import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/widgets/admin/product/price_input_formatter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../widgets/admin/product/custom_dropdown.dart';
@@ -36,12 +39,24 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   List<ProductVariant> variants = [];
   ProductCategory? selectedCategory;
 
+  double formattedPrice(String raw) {
+    final cleaned = raw.replaceAll(".", "");
+    return double.tryParse(cleaned) ?? 0;
+  }
+
+  String toFormattedPrice(double num) {
+    final f = NumberFormat.decimalPattern("id_ID");
+    return f.format(num);
+  }
+
   @override
   void initState() {
     super.initState();
     nameC = TextEditingController(text: widget.product?.productName ?? "");
     priceC = TextEditingController(
-      text: widget.product?.price.toString() ?? "",
+      text: widget.product == null
+          ? ""
+          : toFormattedPrice(widget.product!.price),
     );
     descC = TextEditingController(text: widget.product?.description ?? "");
     selectedCategory =
@@ -85,31 +100,50 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
+
     final name = nameC.text;
-    final price = double.parse(priceC.text);
+    final price = formattedPrice(priceC.text);
     final desc = descC.text;
     final category = selectedCategory!;
     final id = widget.product?.productId ?? const Uuid().v4();
 
+    Product product;
+
     if (widget.product == null) {
-      final newProduct = await _productService.createProduct(
+      // CREATE NEW PRODUCT
+      product = await _productService.createProduct(
         name,
         price,
         desc,
         category,
       );
-      await _productService.replaceImages(newProduct.productId, images);
-      await _productService.replaceVariants(newProduct.productId, variants);
     } else {
+      // UPDATE EXISTING PRODUCT
+      product = widget.product!;
       await _productService.updateProduct(id, {
         "product_name": name,
         "price": price,
         "description": desc,
         "category_id": category.categoryId,
       });
-      await _productService.replaceImages(id, images);
-      await _productService.replaceVariants(id, variants);
     }
+
+    // HANDLE IMAGES
+    List<ProductImage> savedImages = [];
+    for (final img in images) {
+      String imageUrl = img.imageUrl;
+      if (img.file != null) {
+        imageUrl = await CloudinaryService.uploadImage(img.file!);
+      }
+      final savedImage = await _productService.addImage(
+        product.productId,
+        imageUrl,
+      );
+      savedImages.add(savedImage);
+    }
+
+    await _productService.syncImages(product.productId, savedImages);
+    await _productService.syncVariants(product.productId, variants);
 
     Navigator.pop(context);
   }
@@ -139,14 +173,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ProductFormField(
                 controller: nameC,
                 label: "Product Name",
-                validator: (v) => v!.isEmpty ? "Nama wajib diisi" : null,
+                validator: (v) =>
+                    v!.isEmpty ? "Product name is required." : null,
               ),
               const SizedBox(height: 16),
               ProductFormField(
                 controller: priceC,
                 label: "Price",
                 keyboard: TextInputType.number,
-                validator: (v) => v!.isEmpty ? "Harga wajib diisi" : null,
+                inputFormatters: [PriceInputFormatter()],
+                validator: (v) => v!.isEmpty ? "Price is required." : null,
               ),
               const SizedBox(height: 16),
               ProductFormField(

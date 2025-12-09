@@ -41,66 +41,69 @@ class _ProductCustomDropdownState extends State<ProductCustomDropdown> {
   }
 
   OverlayEntry _createOverlay() {
+    RenderBox box = context.findRenderObject() as RenderBox;
+    final size = box.size;
+    final offset = box.localToGlobal(Offset.zero);
+
     return OverlayEntry(
-      builder: (context) => Positioned.fill(
-        child: GestureDetector(
-          onTap: _toggleDropdown,
-          behavior: HitTestBehavior.translucent,
-          child: Stack(
-            children: [
-              CompositedTransformFollower(
-                link: _link,
-                showWhenUnlinked: false,
-                offset: const Offset(0, 60),
-                child: FractionallySizedBox(
-                  widthFactor: 0.91,
-                  child: Material(
-                    elevation: 4,
-                    borderRadius: BorderRadius.circular(12),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 250),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: widget.items.length,
-                        itemBuilder: (context, index) {
-                          final c = widget.items[index];
-                          final isSelected = c == selected;
-                          return InkWell(
-                            onTap: () {
-                              setState(() => selected = c);
-                              widget.onChanged(c);
-                              _toggleDropdown();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.grey.shade200
-                                    : Colors.white,
-                              ),
-                              child: Text(
-                                c.categoryName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: isSelected
-                                      ? const Color(0xFFED1E28)
-                                      : Colors.black87,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _toggleDropdown,
+              behavior: HitTestBehavior.translucent,
+            ),
+          ),
+
+          Positioned(
+            left: offset.dx,
+            top: offset.dy + size.height + 5,
+            width: size.width,
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: widget.items.length,
+                  itemBuilder: (context, index) {
+                    final c = widget.items[index];
+                    final isSelected = c == selected;
+
+                    return InkWell(
+                      onTap: () {
+                        setState(() => selected = c);
+                        widget.onChanged(c);
+                        _toggleDropdown();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.grey.shade200
+                              : Colors.white,
+                        ),
+                        child: Text(
+                          c.categoryName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: isSelected
+                                ? const Color(0xFFED1E28)
+                                : Colors.black87,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

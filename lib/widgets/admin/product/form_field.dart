@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ProductFormField extends StatelessWidget {
   final TextEditingController controller;
@@ -6,6 +7,7 @@ class ProductFormField extends StatelessWidget {
   final int maxLines;
   final TextInputType? keyboard;
   final String? Function(String?)? validator;
+  final List<TextInputFormatter>? inputFormatters;
 
   const ProductFormField({
     super.key,
@@ -14,6 +16,7 @@ class ProductFormField extends StatelessWidget {
     this.maxLines = 1,
     this.keyboard,
     this.validator,
+    this.inputFormatters,
   });
 
   @override

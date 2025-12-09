@@ -124,7 +124,7 @@ class _ProductScreenState extends State<ProductScreen> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const ProductFormScreen(categories: []),
+              builder: (_) => ProductFormScreen(categories: _categories),
             ),
           );
           _loadAll();
@@ -272,8 +272,10 @@ class _ProductScreenState extends State<ProductScreen> {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        ProductFormScreen(product: item, categories: []),
+                    builder: (_) => ProductFormScreen(
+                      product: item,
+                      categories: _categories,
+                    ),
                   ),
                 );
                 _loadAll();
@@ -336,17 +338,31 @@ class _ProductScreenState extends State<ProductScreen> {
             const SizedBox(height: 16),
 
             Expanded(
-              child: _isLoading
+              child: _isLoading && _products.isEmpty
                   ? const Center(
                       child: CircularProgressIndicator(
                         color: Color(0xFFED1E28),
                       ),
                     )
-                  : _products.isEmpty
-                  ? const Center(child: Text("Produk tidak ditemukan"))
-                  : ListView.builder(
-                      itemCount: _products.length,
-                      itemBuilder: (_, i) => _buildProductItem(_products[i]),
+                  : RefreshIndicator(
+                      color: const Color(0xFFED1E28),
+                      onRefresh: () async {
+                        await _loadAll();
+                      },
+                      child: _products.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: const [
+                                SizedBox(height: 200),
+                                Center(child: Text("Product not found")),
+                              ],
+                            )
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: _products.length,
+                              itemBuilder: (_, i) =>
+                                  _buildProductItem(_products[i]),
+                            ),
                     ),
             ),
           ],
