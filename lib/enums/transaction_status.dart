@@ -1,0 +1,1 @@
+enum TransactionStatus { pending, readyForPickup, outForDelivery, completed, cancelled}

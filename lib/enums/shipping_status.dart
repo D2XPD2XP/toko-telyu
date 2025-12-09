@@ -1,1 +1,1 @@
-enum TransactionStatus { outForDelivery, completed }
+enum ShippingStatus { packed, shipped, delivered }

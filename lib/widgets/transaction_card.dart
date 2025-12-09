@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:toko_telyu/enums/shipping_status.dart';
+import 'package:toko_telyu/enums/transaction_status.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 
 class TransactionCard extends StatelessWidget {

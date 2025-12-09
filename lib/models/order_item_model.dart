@@ -1,37 +1,36 @@
 class OrderItem {
+  String orderItemId;
+  int amount;
+  double subtotal;
   String productId;
-  String name;
-  int price;
-  int quantity;
-  List<String> imageUrls;
+  String variantId;
 
   OrderItem({
+    required this.orderItemId,
+    required this.amount,
+    required this.subtotal,
     required this.productId,
-    required this.name,
-    required this.price,
-    required this.quantity,
-    required this.imageUrls,
+    required this.variantId,
   });
 
-  factory OrderItem.fromFirestore(Map<String, dynamic> data) {
+  factory OrderItem.fromFirestore(Map<String, dynamic> data, String id) {
     return OrderItem(
-      productId: data['productId'] ?? '',
-      name: data['name'] ?? '',
-      price: data['price'] ?? 0,
-      quantity: data['quantity'] ?? 1,
-      imageUrls: data['image_urls'] != null
-          ? List<String>.from(data['image_urls'])
-          : [],
+      orderItemId: id,
+      amount: data['amount'],
+      subtotal: (data['subtotal'] as num).toDouble(),
+      productId: data['productId'],
+      variantId: data['variantId'],
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
+      'orderItemId': orderItemId,
+      'amount': amount,
+      'subtotal': subtotal,
       'productId': productId,
-      'name': name,
-      'price': price,
-      'quantity': quantity,
-      'image_urls': imageUrls,
+      'variantId': variantId,
     };
   }
 }
+

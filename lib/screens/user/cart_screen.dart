@@ -62,7 +62,7 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (user == null) {
+    if (loading) {
       return Scaffold(
         backgroundColor: Colors.white,
         body: Center(
@@ -110,7 +110,8 @@ class _CartScreenState extends State<CartScreen> {
         ],
       ),
 
-      body: RefreshIndicator(
+      body: cartItems!.isNotEmpty
+          ?RefreshIndicator(
         backgroundColor: Colors.white,
         color: Color(0xFFED1E28),
         onRefresh: _loadData,
@@ -145,70 +146,91 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ],
         ),
-      ),
-
-      bottomNavigationBar: Container(
-        height: 80,
+      ) : Container(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: loading == false
-            ? Row(
-                children: [
-                  const Spacer(),
-
-                  FormattedPrice(
-                    price: totalPrice,
-                    size: 16,
-                    fontWeight: FontWeight.bold,
+        child: Center(
+                child: Text(
+                  "Your cart is empty, let's add some products!",
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFFED1E28),
                   ),
-
-                  const SizedBox(width: 15),
-
-                  // Button Buy
-                  SizedBox(
-                    height: 45,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CheckoutScreen(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryRed,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                      ),
-                      child: Text(
-                        "Buy(${cartItems!.length})",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : Center(
-                child: CircularProgressIndicator(color: Color(0xFFED1E28)),
+                  textAlign: TextAlign.center,
+                ),
               ),
       ),
+      bottomNavigationBar: cartItems!.isNotEmpty
+          ? Container(
+              height: 80,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: loading == false
+                  ? Row(
+                      children: [
+                        const Spacer(),
+
+                        FormattedPrice(
+                          price: totalPrice,
+                          size: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+
+                        const SizedBox(width: 15),
+
+                        // Button Buy
+                        SizedBox(
+                          height: 45,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      CheckoutScreen(cartItems: cartItems!),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryRed,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
+                            ),
+                            child: Text(
+                              "Buy(${cartItems!.length})",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFED1E28),
+                      ),
+                    ),
+            )
+          : null,
     );
   }
 }
