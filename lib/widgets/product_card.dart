@@ -91,15 +91,42 @@ class _ProductCardState extends State<ProductCard> {
             Stack(
               alignment: Alignment.topRight,
               children: [
-                Image(
-                  image: NetworkImage(widget.image?.imageUrl ?? ''),
-                  width: 200,
+                AspectRatio(
+                  aspectRatio: 1, 
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: (widget.image?.imageUrl ?? '').isNotEmpty
+                        ? Image.network(
+                            widget.image!.imageUrl,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return const Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFED1E28),),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.image, color: Colors.grey),
+                          ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(6.0),
                   child: Icon(
                     isWishlisted ? Icons.favorite : Symbols.favorite,
-                    color: isWishlisted ? Color(0xFFED1E28) : Colors.grey[900],
+                    color: Color(0xFFED1E28)
                   ),
                 ),
               ],

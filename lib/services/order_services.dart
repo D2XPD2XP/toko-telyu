@@ -1,17 +1,14 @@
-import 'package:toko_telyu/enums/shipping_method.dart';
 import 'package:toko_telyu/enums/shipping_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
 import 'package:toko_telyu/models/order_item_model.dart';
 import 'package:toko_telyu/models/order_model.dart';
 import 'package:toko_telyu/repositories/order_repositories.dart';
-import 'package:uuid/uuid.dart';
 
 
 class OrderService {
   final OrderRepository _repo = OrderRepository();
 
   Future<String> createOrderWithItems(OrderModel order, List<OrderItem> items) async {
-
     final orderId = await _repo.createOrder(order);
     for (var item in items) {
       await _repo.addOrderItem(orderId, item);

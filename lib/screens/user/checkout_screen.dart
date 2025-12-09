@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/enums/shipping_method.dart';
+import 'package:toko_telyu/models/cart_item.dart';
+import 'package:toko_telyu/models/delivery_area.dart';
+import 'package:toko_telyu/models/product.dart';
+import 'package:toko_telyu/models/product_image.dart';
+import 'package:toko_telyu/models/product_variant.dart';
+import 'package:toko_telyu/models/user.dart';
+import 'package:toko_telyu/services/delivery_area_services.dart';
+import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
+import 'package:toko_telyu/widgets/shipping_address_sheet.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({Key? key}) : super(key: key);
+  final List<CartItem> cartItems;
+
+  const CheckoutScreen({super.key, required this.cartItems});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -12,15 +25,59 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final Color primaryRed = const Color(0xFFED1E28);
   final Color bgGrey = const Color(0xFFF5F5F5);
+  final UserService _userService = UserService();
+  final ProductService productService = ProductService();
+  final DeliveryAreaService _deliveryAreaService = DeliveryAreaService();
 
-  List<String> addresses = [
-    "TELKOM UNIVERSITY LANDMARK TOWER",
-    "REKTORAT TELKOM UNIVERSITY",
-    "CACUK",
-    "GEDUNG KULIAH UMUM",
-  ];
+  User? user;
+  List<Widget> checkoutItem = [];
+  List<DeliveryArea> deliveryAreas = [];
+  bool loading = false;
+  ShippingMethod shippingMethod = ShippingMethod.delivery;
+  DeliveryArea? selectedAddress;
+  Map<String, dynamic>? currentAddress;
 
-  String selectedAddress = "TELKOM UNIVERSITY LANDMARK TOWER";
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      loading = true;
+    });
+    user = await _userService.loadUser();
+    checkoutItem.clear();
+    for (var item in widget.cartItems) {
+      final product = await productService.getProduct(item.productId);
+      final images = await productService.getImages(item.productId);
+      final variants = await productService.getVariants(item.productId);
+      final variant = variants.firstWhere((v) => item.variantId == v.variantId);
+
+      checkoutItem.add(
+        _buildProductItem(product, variant, images.first, item.amount),
+      );
+    }
+    deliveryAreas = await _deliveryAreaService.fetchAllAreas();
+    selectedAddress = deliveryAreas[0];
+    currentAddress = user!.address;
+    setState(() {
+      loading = false;
+    });
+  }
+
+  void onConfirmShipping(
+    ShippingMethod newMethod,
+    DeliveryArea? newArea,
+    Map<String, dynamic>? address,
+  ) {
+    setState(() {
+      shippingMethod = newMethod;
+      selectedAddress = newArea;
+      currentAddress = address;
+    });
+  }
 
   void _showAddressSelection() {
     showModalBottomSheet(
@@ -28,14 +85,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return _ShippingAddressSheet(
-          addresses: addresses,
-          currentSelection: selectedAddress,
-          onConfirm: (newAddress) {
-            setState(() {
-              selectedAddress = newAddress;
-            });
-          },
+        return ShippingAddressSheet(
+          deliveryArea: deliveryAreas,
+          currentSelection: selectedAddress ?? deliveryAreas[0],
+          currentAddress: user!.address,
+          shippingMethod: shippingMethod,
+          onConfirm: onConfirmShipping,
         );
       },
     );
@@ -43,6 +98,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFED1E28)),
+        ),
+      );
+    }
+
+    double serviceFee = 1000;
+    double totalPrice = 0;
+    for (var item in widget.cartItems) {
+      totalPrice += item.subtotal;
+    }
+    double shippingCost = (shippingMethod == ShippingMethod.directDelivery)
+        ? (selectedAddress?.getDeliveryfee() ?? 0)
+        : (shippingMethod == ShippingMethod.delivery ? 3000 : 0);
+    double grandTotal = totalPrice + serviceFee + shippingCost;
+
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
@@ -63,12 +137,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ),
 
-      body: SingleChildScrollView(
+      body: Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildProductItem(),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return checkoutItem[index];
+              },
+              itemCount: checkoutItem.length,
+            ),
 
             const SizedBox(height: 16),
 
@@ -95,13 +176,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Shipping Address",
+                      "Shipping Option",
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+                    const Icon(Icons.keyboard_arrow_right, color: Colors.black),
                   ],
                 ),
               ),
@@ -142,9 +223,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Divider(),
-                  _buildDetailRow("Item Subtotal", 300000),
-                  _buildDetailRow("Total Shipping Cost", 5000),
-                  _buildDetailRow("Service Fee", 1000),
+                  _buildDetailRow("Item Subtotal", totalPrice),
+                  if (shippingMethod != ShippingMethod.pickup)
+                    _buildDetailRow(
+                      "Total Shipping Cost",
+                      shippingMethod == ShippingMethod.directDelivery
+                          ? selectedAddress!.getDeliveryfee()
+                          : 3000,
+                    ),
+                  _buildDetailRow("Service Fee", serviceFee),
                   const Divider(),
                   const SizedBox(height: 4),
                   Row(
@@ -158,8 +245,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           color: Colors.black,
                         ),
                       ),
-                      const FormattedPrice(
-                        price: 306000,
+                      FormattedPrice(
+                        price: grandTotal,
                         size: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -211,7 +298,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildProductItem() {
+  Widget _buildProductItem(
+    Product product,
+    ProductVariant variant,
+    ProductImage image,
+    int quantity,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -244,8 +336,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ],
             ),
             child: Center(
-              child: Image.asset(
-                "assets/seragam_merah_telkom.png",
+              child: Image.network(
+                image.imageUrl,
                 width: 60,
                 fit: BoxFit.contain,
               ),
@@ -257,7 +349,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Seragam Telkom - Merah",
+                  product.productName,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -273,14 +365,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text("S", style: GoogleFonts.poppins(fontSize: 12)),
+                  child: Text(
+                    variant.optionName,
+                    style: GoogleFonts.poppins(fontSize: 12),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const FormattedPrice(
-                      price: 150000,
+                    FormattedPrice(
+                      price: product.price,
                       size: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -294,7 +389,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        "x2",
+                        "x$quantity",
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: primaryRed,
@@ -323,163 +418,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
           ),
           FormattedPrice(price: price, size: 12, fontWeight: FontWeight.w400),
-        ],
-      ),
-    );
-  }
-}
-
-// =============================================================================
-//  WIDGET POP UP: SHIPPING ADDRESS SHEET
-// =============================================================================
-class _ShippingAddressSheet extends StatefulWidget {
-  final List<String> addresses;
-  final String currentSelection;
-  final Function(String) onConfirm;
-
-  const _ShippingAddressSheet({
-    Key? key,
-    required this.addresses,
-    required this.currentSelection,
-    required this.onConfirm,
-  }) : super(key: key);
-
-  @override
-  State<_ShippingAddressSheet> createState() => _ShippingAddressSheetState();
-}
-
-class _ShippingAddressSheetState extends State<_ShippingAddressSheet> {
-  late String _tempSelectedAddress;
-  final Color primaryRed = const Color(0xFFED1E28);
-
-  @override
-  void initState() {
-    super.initState();
-    _tempSelectedAddress = widget.currentSelection;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.6,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Shipping Address",
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: widget.addresses.length,
-              itemBuilder: (context, index) {
-                final address = widget.addresses[index];
-                final isSelected = address == _tempSelectedAddress;
-
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _tempSelectedAddress = address;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected ? primaryRed : Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            address,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white : primaryRed,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          isSelected
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked,
-                          color: isSelected ? Colors.white : primaryRed,
-                          size: 24,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onConfirm(_tempSelectedAddress);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryRed,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  "OK",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

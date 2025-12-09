@@ -9,7 +9,7 @@ class OrderModel {
   TransactionStatus orderStatus;
   ShippingMethod shippingMethod;
   ShippingStatus? shippingStatus;
-  String? shippingAddress;
+  Map<String, dynamic>? shippingAddress;
   DateTime orderDate;
   int totalAmount;
   String paymentId;

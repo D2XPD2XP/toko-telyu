@@ -3,7 +3,7 @@ import '../models/delivery_area.dart';
 
 class DeliveryAreaRepository {
   final CollectionReference _collection =
-      FirebaseFirestore.instance.collection('deliveryAreas');
+      FirebaseFirestore.instance.collection('delivery_area');
 
   Future<void> addDeliveryArea(DeliveryArea area) async {
     await _collection.doc(area.getAreaId()).set(area.toFirestore());
@@ -12,14 +12,14 @@ class DeliveryAreaRepository {
   Future<List<DeliveryArea>> getAllAreas() async {
     final querySnapshot = await _collection.get();
     return querySnapshot.docs
-        .map((doc) => DeliveryArea.fromFirestore(doc.data() as Map<String, dynamic>))
+        .map((doc) => DeliveryArea.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
         .toList();
   }
 
   Future<DeliveryArea?> getAreaById(String id) async {
     final doc = await _collection.doc(id).get();
     if (!doc.exists) return null;
-    return DeliveryArea.fromFirestore(doc.data() as Map<String, dynamic>);
+    return DeliveryArea.fromFirestore(doc.data() as Map<String, dynamic>, id);
   }
 
   Future<void> updateDeliveryArea(DeliveryArea area) async {

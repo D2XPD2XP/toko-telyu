@@ -1,1 +1,1 @@
-enum ShippingMethod { pickup, delivery }
+enum ShippingMethod { pickup, directDelivery ,delivery }

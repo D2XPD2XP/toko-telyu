@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:toko_telyu/models/cart.dart';
+import 'package:toko_telyu/models/cart_item.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/screens/user/account_screen.dart';
 import 'package:toko_telyu/screens/user/cart_screen.dart';
+import 'package:toko_telyu/screens/user/checkout_screen.dart';
 import 'package:toko_telyu/services/cart_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 import 'package:toko_telyu/widgets/product_image_carousel.dart';
 import 'package:toko_telyu/widgets/variant_item.dart';
+import 'package:uuid/uuid.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   const ProductDetailsScreen({super.key, required this.productId});
@@ -35,6 +38,7 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
   List<ProductImage>? images;
   List<ProductVariant>? variants;
   int selectedIndex = 0;
+  bool loading = false;
 
   @override
   void initState() {
@@ -43,14 +47,17 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
   }
 
   Future<void> _loadData() async {
+    setState(() {
+      loading = true;
+    });
     user = await _userService.loadUser();
     cart = await _cartService.getCart(user!.userId);
     product = await _productService.getProduct(widget.productId);
     images = await _productService.getImages(widget.productId);
-    if (product!.category.isFittable) {
-      variants = await _productService.getVariants(widget.productId);
-    }
-    setState(() {});
+    variants = await _productService.getVariants(widget.productId);
+    setState(() {
+      loading = false;
+    });
   }
 
   void handleButton(int index) {
@@ -61,7 +68,7 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (product == null) {
+    if (loading) {
       return Scaffold(
         backgroundColor: Colors.white,
         body: Center(
@@ -86,7 +93,7 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
             iconSize: 28,
             icon: Icon(Icons.dehaze, color: Color(0xFFED1E28)),
             onPressed: () {
-               Navigator.push(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AccountScreen()),
               );
@@ -171,42 +178,42 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                       fontWeight: FontWeight.w300,
                     ),
                   ),
-                  if (product!.category.isFittable && variants!.isNotEmpty) ...[
-                    SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {},
-                      child: Row(
-                        children: [
-                          Text(
-                            'Select Size',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                  SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Row(
+                      children: [
+                        Text(
+                          product!.category.isFittable
+                              ? 'Select Size'
+                              : 'Select Variant',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
-                          Icon(Icons.keyboard_arrow_right),
-                        ],
-                      ),
+                        ),
+                        Icon(Icons.keyboard_arrow_right),
+                      ],
                     ),
-                    SizedBox(height: 6),
-                    SizedBox(
-                      height: 25,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: variants!.length,
-                        itemBuilder: (context, index) {
-                          bool isSelected = index == selectedIndex;
-                          ProductVariant variant = variants![index];
-                          return VariantItem(
-                            variant: variant.optionName,
-                            isSelected: isSelected,
-                            idx: index,
-                            onTap: handleButton,
-                          );
-                        },
-                      ),
+                  ),
+                  SizedBox(height: 6),
+                  SizedBox(
+                    height: 25,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: variants!.length,
+                      itemBuilder: (context, index) {
+                        bool isSelected = index == selectedIndex;
+                        ProductVariant variant = variants![index];
+                        return VariantItem(
+                          variant: variant.optionName,
+                          isSelected: isSelected,
+                          idx: index,
+                          onTap: handleButton,
+                        );
+                      },
                     ),
-                  ],
+                  ),
                   SizedBox(height: 8),
                   Text(
                     'Product Description',
@@ -242,7 +249,21 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
           children: [
             InkWell(
               onTap: () async {
-                
+                List<CartItem> items = [
+                  CartItem(
+                    Uuid().v4(),
+                    1,
+                    product!.price,
+                    product!.productId,
+                    variants![selectedIndex].variantId,
+                  ),
+                ];
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CheckoutScreen(cartItems: items),
+                  ),
+                );
               },
               child: Container(
                 width: 170,
