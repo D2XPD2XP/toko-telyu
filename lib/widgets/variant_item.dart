@@ -21,8 +21,7 @@ class VariantItem extends StatelessWidget {
       onTap: () {onTap(idx);},
       child: Container(
         margin: EdgeInsets.only(right: 8),
-        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 5),
-        width: 47,
+        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 18),
         height: 25,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(5),
