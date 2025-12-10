@@ -144,6 +144,8 @@ class _ProductCardState extends State<ProductCard> {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: 5),
             FormattedPrice(
