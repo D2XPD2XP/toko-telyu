@@ -182,6 +182,7 @@ class _Homepage extends State<Homepage> {
                                     ? productImages[product.productId]![0]
                                     : null;
                                 return ProductCard(
+                                  key: Key(product.productId),
                                   user: user!,
                                   product: product,
                                   image: firstImage,
