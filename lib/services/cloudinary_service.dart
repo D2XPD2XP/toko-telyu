@@ -7,14 +7,8 @@ class CloudinaryService {
   /// Upload image to Cloudinary
   /// Throws an Exception if upload fails
   static Future<String> uploadImage(File file) async {
-    final cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME'];
-    final preset = dotenv.env['CLOUDINARY_UPLOAD_PRESET'];
-
-    if (cloudName == null || preset == null) {
-      throw Exception(
-        "Cloudinary config not found. Make sure .env has CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET",
-      );
-    }
+    final cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME']!;
+    final preset = dotenv.env['CLOUDINARY_UPLOAD_PRESET']!;
 
     final url = Uri.parse(
       'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
@@ -26,36 +20,33 @@ class CloudinaryService {
       ..files.add(await http.MultipartFile.fromPath('file', file.path));
 
     final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
+    final jsonString = await response.stream.bytesToString();
 
     if (response.statusCode != 200) {
-      throw Exception("Cloudinary upload failed: $responseBody");
+      throw Exception("Cloudinary upload failed: $jsonString");
     }
 
-    final secureUrl = RegExp(
-      r'"secure_url":"(.*?)"',
-    ).firstMatch(responseBody)?.group(1);
+    final data = jsonDecode(jsonString);
 
-    if (secureUrl == null) {
-      throw Exception("secure_url not found in response: $responseBody");
+    if (data['secure_url'] == null) {
+      throw Exception("secure_url missing. Full response: $jsonString");
     }
 
-    final cleanUrl = secureUrl.replaceAll(r'\/', '/');
-
-    return cleanUrl;
+    return data['secure_url'];
   }
 
   static String extractPublicId(String imageUrl) {
-    final uri = Uri.parse(imageUrl);
-    final segments = uri.pathSegments;
+    final url = Uri.parse(imageUrl);
 
+    final segments = url.pathSegments;
     final uploadIndex = segments.indexOf('upload');
-    final publicIdParts = segments.sublist(uploadIndex + 2);
 
-    final fileName = publicIdParts.last.split('.').first;
-    publicIdParts[publicIdParts.length - 1] = fileName;
+    final parts = segments.sublist(uploadIndex + 2).toList();
 
-    return publicIdParts.join('/');
+    final fileName = parts.last.split('.').first;
+    parts[parts.length - 1] = fileName;
+
+    return parts.join('/');
   }
 
   static Future<void> deleteImage(String imageUrl) async {

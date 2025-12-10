@@ -19,6 +19,8 @@ class _ProductScreenState extends State<ProductScreen> {
   final ProductService _service = ProductService();
   final ProductCategoryService _categoryService = ProductCategoryService();
 
+  double get bottomPadding => MediaQuery.of(context).padding.bottom + 50;
+
   List<Product> _products = [];
   List<ProductCategory> _categories = [];
 
@@ -238,26 +240,37 @@ class _ProductScreenState extends State<ProductScreen> {
                 const SizedBox(height: 8),
 
                 // IMAGE + VARIANT COUNT
-                Row(
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 4,
                   children: [
-                    Icon(Icons.image, size: 16, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      "${images.length} Image",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.image, size: 16, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Text(
+                          "${images.length} Image",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Icon(Icons.layers, size: 16, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      "${variants.length} Variant",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.layers, size: 16, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Text(
+                          "${variants.length} Variant",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -359,6 +372,7 @@ class _ProductScreenState extends State<ProductScreen> {
                             )
                           : ListView.builder(
                               physics: const AlwaysScrollableScrollPhysics(),
+                              padding: EdgeInsets.only(bottom: bottomPadding),
                               itemCount: _products.length,
                               itemBuilder: (_, i) =>
                                   _buildProductItem(_products[i]),

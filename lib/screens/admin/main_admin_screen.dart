@@ -16,12 +16,12 @@ class MainAdminScreen extends StatefulWidget {
 class _MainAdminScreenState extends State<MainAdminScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = const [
-    OrdersScreen(),
-    ProductScreen(),
-    CategoryScreen(),
-    ChatScreen(),
-    SettingsScreen(),
+  final List<Widget> _pages = [
+    SafeArea(child: OrdersScreen()),
+    SafeArea(child: ProductScreen()),
+    SafeArea(child: CategoryScreen()),
+    SafeArea(child: ChatScreen()),
+    SafeArea(child: SettingsScreen()),
   ];
 
   void _handleNavTap(int index) {
