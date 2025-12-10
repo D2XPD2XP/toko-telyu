@@ -231,7 +231,7 @@ class _ProductDetailScreen extends State<ProductDetailsScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                      product!.description,
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w300,
