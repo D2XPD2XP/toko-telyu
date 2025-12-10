@@ -76,6 +76,7 @@ class WishlistService {
 
   Future<List<WishlistCard>> loadWishlistCards(
     String userId,
+    String wishlistId,
     String cartId,
     List<WishlistItem> wishlistItems,
     List<CartItem>? cartItems,
@@ -93,7 +94,9 @@ class WishlistService {
       wishlistCards.add(
         WishlistCard(
           userId: userId,
+          wishlistId: wishlistId,
           cartId: cartId,
+          itemId: item.wishlistItemId!,
           productId: product.productId,
           productName: product.productName,
           productImage: images[0],
