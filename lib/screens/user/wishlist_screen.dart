@@ -59,6 +59,7 @@ class _FavoriteScreenState extends State<FavoritesScreen> {
     cartItems = await _cartService.getItems(user!.userId, cart!.cartId!);
     wishlistCard = await _wishlistService.loadWishlistCards(
       user!.userId,
+      wishlist!.wishlistId!,
       cart!.cartId!,
       wishlistItem!,
       cartItems,
