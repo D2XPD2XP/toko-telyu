@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:toko_telyu/repositories/product_repositories.dart';
+import 'package:toko_telyu/services/cloudinary_service.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
 import '../models/product_image.dart';
@@ -55,7 +58,14 @@ class ProductService {
   // IMAGES
   // --------------------------
 
-  Future<void> addImage(String productId, String imageUrl) async {
+  Future<ProductImage> addImage(String productId, String imageUrl) async {
+    final image = ProductImage(const Uuid().v4(), imageUrl);
+    await _repo.addImage(productId, image);
+    return image;
+  }
+
+  Future<void> addImageFile(String productId, File file) async {
+    final imageUrl = await CloudinaryService.uploadImage(file);
     final image = ProductImage(const Uuid().v4(), imageUrl);
     await _repo.addImage(productId, image);
   }
@@ -65,7 +75,49 @@ class ProductService {
   }
 
   Future<void> deleteImage(String productId, String imageId) async {
+    final images = await _repo.getImages(productId);
+    final img = images.firstWhere((e) => e.imageId == imageId);
+
+    try {
+      await CloudinaryService.deleteImage(img.imageUrl);
+    } catch (e) {
+      print("Cloudinary delete failed: $e");
+    }
     await _repo.deleteImage(productId, imageId);
+  }
+
+  Future<void> syncImages(
+    String productId,
+    List<ProductImage> newImages,
+  ) async {
+    final oldImages = await getImages(productId);
+
+    final toAdd = newImages.where(
+      (img) => !oldImages.any((old) => old.imageId == img.imageId),
+    );
+    for (var img in toAdd) {
+      await addImage(productId, img.imageUrl);
+    }
+
+    final toDelete = oldImages.where(
+      (old) => !newImages.any((img) => img.imageId == old.imageId),
+    );
+    for (var img in toDelete) {
+      await deleteImage(productId, img.imageId);
+    }
+  }
+
+  Future<void> replaceImages(
+    String productId,
+    List<ProductImage> newImages,
+  ) async {
+    final oldImages = await getImages(productId);
+    for (var img in oldImages) {
+      await deleteImage(productId, img.imageId);
+    }
+    for (var img in newImages) {
+      await _repo.addImage(productId, img);
+    }
   }
 
   // --------------------------
@@ -110,16 +162,53 @@ class ProductService {
     return variants.any((v) => v.stock > 0);
   }
 
+  Future<void> syncVariants(
+    String productId,
+    List<ProductVariant> newVariants,
+  ) async {
+    final oldVariants = await getVariants(productId);
+
+    final toAdd = newVariants.where(
+      (v) => !oldVariants.any((old) => old.variantId == v.variantId),
+    );
+    for (var v in toAdd) {
+      await addVariant(productId, v.optionName, v.stock, v.additionalPrice);
+    }
+
+    final toDelete = oldVariants.where(
+      (old) => !newVariants.any((v) => v.variantId == old.variantId),
+    );
+    for (var v in toDelete) {
+      await deleteVariant(productId, v.variantId);
+    }
+  }
+
+  Future<void> replaceVariants(
+    String productId,
+    List<ProductVariant> newVariants,
+  ) async {
+    final oldVariants = await getVariants(productId);
+    for (var v in oldVariants) {
+      await deleteVariant(productId, v.variantId);
+    }
+    for (var v in newVariants) {
+      await _repo.addVariant(productId, v);
+    }
+  }
+
   // --------------------------
   // SEARCH
   // --------------------------
 
-  Future<List<Product>> searchProducts(String query, List<ProductCategory> categories) async {
+  Future<List<Product>> searchProducts(
+    String query,
+    List<ProductCategory> categories,
+  ) async {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return [];
 
     final all = await getAllProducts(categories);
-    return all.where((p){
+    return all.where((p) {
       final name = (p.productName).toLowerCase();
       return name.contains(q);
     }).toList();
