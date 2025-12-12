@@ -52,82 +52,80 @@ class _SignupPage extends State<SignupPage> {
               SizedBox(height: 20),
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 40),
-                child: Expanded(
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _usernameController,
-                        decoration: InputDecoration(
-                          label: Text(
-                            'Username',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 20,
-                            ),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        label: Text(
+                          'Username',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
                           ),
                         ),
                       ),
-                      SizedBox(height: 20),
-                      TextField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          label: Text(
-                            'Email',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 20,
-                            ),
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        label: Text(
+                          'Email',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
                           ),
                         ),
                       ),
-                      SizedBox(height: 20),
-                      TextField(
-                        obscureText: _obscure1,
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          label: Text(
-                            'Password',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 20,
-                            ),
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
+                      obscureText: _obscure1,
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        label: Text(
+                          'Password',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
                           ),
-                          suffixIcon: IconButton(
-                            onPressed: () =>
-                                setState(() => _obscure1 = !_obscure1),
-                            icon: Icon(
-                              _obscure1 == false
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
+                        ),
+                        suffixIcon: IconButton(
+                          onPressed: () =>
+                              setState(() => _obscure1 = !_obscure1),
+                          icon: Icon(
+                            _obscure1 == false
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                           ),
                         ),
                       ),
-                      SizedBox(height: 20),
-                      TextField(
-                        obscureText: _obscure2,
-                        controller: _confirmController,
-                        decoration: InputDecoration(
-                          label: Text(
-                            'Confirm Password',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 20,
-                            ),
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
+                      obscureText: _obscure2,
+                      controller: _confirmController,
+                      decoration: InputDecoration(
+                        label: Text(
+                          'Confirm Password',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
                           ),
-                          suffixIcon: IconButton(
-                            onPressed: () =>
-                                setState(() => _obscure2 = !_obscure2),
-                            icon: Icon(
-                              _obscure2 == false
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
+                        ),
+                        suffixIcon: IconButton(
+                          onPressed: () =>
+                              setState(() => _obscure2 = !_obscure2),
+                          icon: Icon(
+                            _obscure2 == false
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 40),
