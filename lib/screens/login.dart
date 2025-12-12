@@ -48,46 +48,43 @@ class _LoginPage extends State<LoginPage> {
               SizedBox(height: 20),
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 40),
-                child: Expanded(
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          label: Text(
-                            'Email',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 20,
-                            ),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        label: Text(
+                          'Email',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
                           ),
                         ),
                       ),
-                      SizedBox(height: 40),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: _obscure,
-                        decoration: InputDecoration(
-                          label: Text(
-                            'Password',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 20,
-                            ),
+                    ),
+                    SizedBox(height: 40),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: _obscure,
+                      decoration: InputDecoration(
+                        label: Text(
+                          'Password',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
                           ),
-                          suffixIcon: IconButton(
-                            onPressed: () =>
-                                setState(() => _obscure = !_obscure),
-                            icon: Icon(
-                              _obscure == false
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
+                        ),
+                        suffixIcon: IconButton(
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                          icon: Icon(
+                            _obscure == false
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 40),

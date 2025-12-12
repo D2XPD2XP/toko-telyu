@@ -1,47 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/models/product.dart';
+import 'package:toko_telyu/models/product_category.dart';
+import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/screens/user/customer_service_chat_screen.dart';
+import 'package:toko_telyu/services/chatbot_services.dart';
+import 'package:toko_telyu/services/product_category_services.dart';
+import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/customer_service_button.dart';
 import 'package:toko_telyu/widgets/chatbot_initial_menu.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({Key? key}) : super(key: key);
+  const ChatbotScreen({super.key});
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
+  final UserService _userService = UserService();
+  final ProductService _productService = ProductService();
+  final ProductCategoryService _productCategoryService =
+      ProductCategoryService();
+  final ChatbotService _chatbotService = ChatbotService();
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final Color primaryRed = const Color(0xFFED1E28);
+  User? user;
+  List<Product>? products;
+  List<ProductCategory>? categories;
+  bool isLoading = false;
+  bool isLoadResponse = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      isLoading = true;
+    });
+    user = await _userService.loadUser();
+    categories = await _productCategoryService.getCategories();
+    products = await _productService.getAllProducts(categories!);
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   final List<Map<String, dynamic>> _chatItems = [
     {"type": "initial_menu"},
   ];
 
-  void _handleSend() {
+  void _handleSend() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
     setState(() {
       _chatItems.add({"type": "text", "isUser": true, "content": text});
       _controller.clear();
-
-      if (text.toLowerCase().contains("hubungkan") ||
-          text.toLowerCase().contains("cs") ||
-          text.toLowerCase().contains("admin")) {
-        Future.delayed(const Duration(milliseconds: 600), () {
-          if (mounted) {
-            setState(() {
-              _chatItems.add({"type": "cs_card"});
-            });
-            _scrollToBottom();
-          }
-        });
-      }
     });
 
+    _scrollToBottom();
+    setState(() {
+      isLoadResponse = true;
+    });
+    await _handlerResponse(text, products!, categories!);
+    setState(() {
+      isLoadResponse = false;
+    });
+  }
+
+  Future<void> _handlerResponse(
+    String text,
+    List<Product> products,
+    List<ProductCategory> categories,
+  ) async {
+    String response;
+    try {
+      response = await _chatbotService.sendMessage(text, products, categories);
+    } catch (e) {
+      response = "Gagal mendapatkan respons dari bot. Error: $e";
+    }
+    setState(() {
+      _chatItems.add({"type": "text", "isUser": false, "content": response});
+    });
     _scrollToBottom();
   }
 
@@ -59,6 +105,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFED1E28)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFE5E5E5),
       appBar: AppBar(
@@ -90,7 +145,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
-              itemCount: _chatItems.length + 1,
+              itemCount: _chatItems.length + 1 + (isLoadResponse ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return Padding(
@@ -107,10 +162,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   );
                 }
 
+                if (isLoadResponse && index == _chatItems.length + 1) {
+                  return _buildTextBubble(text: "Typing...", isUser: false);
+                }
+
                 final item = _chatItems[index - 1];
 
                 if (item["type"] == "initial_menu") {
                   return ChatbotInitialMenu(
+                    username: user!.name,
                     onFaqTap: (text) {
                       _controller.text = text;
                       _handleSend();
@@ -139,7 +199,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     ],
                   );
                 }
-
                 return const SizedBox.shrink();
               },
             ),

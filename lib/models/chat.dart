@@ -1,53 +1,44 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toko_telyu/enums/role.dart';
-import 'package:toko_telyu/models/user.dart';
 
 class Chat {
-  String _chatId;
-  User _customer;
-  User _admin;
-  String _message;
-  RoleEnum _senderRole;
-  DateTime _sentAt;
+  String chatId;
+  String senderId;
+  String receiverId;
+  String message;
+  RoleEnum senderRole;
+  DateTime sentAt;
 
-  Chat(
-    this._chatId,
-    this._customer,
-    this._admin,
-    this._message,
-    this._senderRole,
-    this._sentAt,
-  );
+  Chat({
+    required this.chatId,
+    required this.senderId,
+    required this.receiverId,
+    required this.message,
+    required this.senderRole,
+    required this.sentAt,
+  });
 
-  // Getters
-  String getChatId() => _chatId;
-  User getCustomer() => _customer;
-  User getAdmin() => _admin;
-  String getMessage() => _message;
-  RoleEnum getSenderRole() => _senderRole;
-  DateTime getSentAt() => _sentAt;
-
-  // Setters
-  void setChatId(String chatId) {
-    _chatId = chatId;
+  factory Chat.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return Chat(
+      chatId: doc.id,
+      senderId: data['sender_id'],
+      receiverId: data['receiver_id'],
+      message: data['message'],
+      senderRole: RoleEnum.values
+          .firstWhere((e) => e.toString() == data['sender_role']),
+      sentAt: (data['sent_at'] as Timestamp).toDate(),
+    );
   }
 
-  void setCustomer(User customer) {
-    _customer = customer;
-  }
-
-  void setAdmin(User admin) {
-    _admin = admin;
-  }
-
-  void setMessage(String message) {
-    _message = message;
-  }
-
-  void setSenderRole(RoleEnum role) {
-    _senderRole = role;
-  }
-
-  void setSentAt(DateTime sentAt) {
-    _sentAt = sentAt;
+  Map<String, dynamic> toFirestore() {
+    return {
+      'sender_id': senderId,
+      'receiver_id': receiverId,
+      'message': message,
+      'sender_role': senderRole.toString(),
+      'sent_at': sentAt,
+    };
   }
 }
+
