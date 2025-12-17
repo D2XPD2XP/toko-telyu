@@ -33,6 +33,9 @@ class _Homepage extends State<Homepage> {
   List<Product>? products;
   Map<String, List<ProductImage>> productImages = {};
   Map<String, bool> availability = {};
+  int idx = 0;
+  bool loading = false;
+  bool isCategory = false;
 
   @override
   void initState() {
@@ -41,6 +44,9 @@ class _Homepage extends State<Homepage> {
   }
 
   Future<void> _loadData({bool isCategory = false, int idx = 0}) async {
+    setState(() {
+      loading = true;
+    });
     user = await _userService.loadUser();
     categories = await _productCategoryService.getCategories();
     products = isCategory == false
@@ -54,11 +60,20 @@ class _Homepage extends State<Homepage> {
         v.productId,
       );
     }
-    setState(() {});
+    setState(() {
+      loading = false;
+    });
   }
 
   void handleCategorySelected(int index) {
-    _loadData(isCategory: true, idx: index);
+    if (index != idx) {
+      idx = index;
+      isCategory = true;
+      _loadData(isCategory: isCategory, idx: index);
+    } else {
+      isCategory = !isCategory;
+      _loadData(isCategory: isCategory, idx: index);
+    }
   }
 
   void handleSearchSubmitted(String value) {
@@ -155,43 +170,59 @@ class _Homepage extends State<Homepage> {
                     ),
                   ),
                   products!.isNotEmpty
-                      ? SliverPadding(
-                          padding: EdgeInsets.only(
-                            left: 18,
-                            right: 18,
-                            bottom: 18,
-                          ),
-                          sliver: SliverGrid(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 25,
-                                  crossAxisSpacing: 25,
-                                  childAspectRatio: 2 / 2.65,
+                      ? loading == false
+                            ? SliverPadding(
+                                padding: EdgeInsets.only(
+                                  left: 18,
+                                  right: 18,
+                                  bottom: 18,
                                 ),
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final product = products![index];
-                              final available =
-                                  availability[product.productId] ?? false;
-                              if (available) {
-                                final firstImage =
-                                    productImages[product.productId]!.isNotEmpty
-                                    ? productImages[product.productId]![0]
-                                    : null;
-                                return ProductCard(
-                                  key: Key(product.productId),
-                                  user: user!,
-                                  product: product,
-                                  image: firstImage,
-                                );
-                              }
-                              return null;
-                            }, childCount: products!.length),
-                          ),
-                        )
+                                sliver: SliverGrid(
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        mainAxisSpacing: 25,
+                                        crossAxisSpacing: 25,
+                                        childAspectRatio: 2 / 2.65,
+                                      ),
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final product = products![index];
+                                    final available =
+                                        availability[product.productId] ??
+                                        false;
+                                    if (available) {
+                                      final firstImage =
+                                          productImages[product.productId]!
+                                              .isNotEmpty
+                                          ? productImages[product.productId]![0]
+                                          : null;
+                                      return ProductCard(
+                                        key: Key(product.productId),
+                                        user: user!,
+                                        product: product,
+                                        image: firstImage,
+                                      );
+                                    }
+                                    return null;
+                                  }, childCount: products!.length),
+                                ),
+                              )
+                            : SliverToBoxAdapter(
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 25.0,
+                                      vertical: 100.0,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFFED1E28),
+                                    ),
+                                  ),
+                                ),
+                              )
                       : SliverToBoxAdapter(
                           child: Center(
                             child: Padding(
