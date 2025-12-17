@@ -128,7 +128,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         builder: (context) => const EditProfileScreen(),
                       ),
                     );
-                    _userService.loadUser();
+                    _loadUser();
                   },
                 ),
 
