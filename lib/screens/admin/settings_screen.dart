@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toko_telyu/services/auth_services.dart';
 import 'shipping_area_screen.dart';
-import 'pickup_point_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -125,18 +124,6 @@ class SettingsScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ShippingAreaScreen()),
-              );
-            },
-          ),
-
-          _buildMenuItem(
-            icon: Icons.store_mall_directory_rounded,
-            title: "Pickup Point Management",
-            iconBg: primaryColor.withOpacity(0.12),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PickupPointScreen()),
               );
             },
           ),

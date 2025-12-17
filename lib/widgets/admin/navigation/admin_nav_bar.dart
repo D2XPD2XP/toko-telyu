@@ -15,7 +15,6 @@ class AdminNavBar extends StatelessWidget {
     NavItemModel(icon: Icons.receipt_long, label: "Orders"),
     NavItemModel(icon: Icons.inventory, label: "Products"),
     NavItemModel(icon: Icons.category, label: "Categories"),
-    NavItemModel(icon: Icons.chat, label: "Chat"),
     NavItemModel(icon: Icons.settings, label: "Settings"),
   ];
 
