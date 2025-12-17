@@ -229,7 +229,8 @@ class ProductService {
     final all = await getAllProducts(categories);
     return all.where((p) {
       final name = (p.productName).toLowerCase();
-      return name.contains(q);
+      return name.contains(q) ||
+          p.category.categoryName.toLowerCase().contains(q);
     }).toList();
   }
 }
