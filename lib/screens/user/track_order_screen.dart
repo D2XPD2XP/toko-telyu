@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TrackOrderScreen extends StatelessWidget {
-  const TrackOrderScreen({Key? key}) : super(key: key);
+  const TrackOrderScreen({super.key, required String orderId});
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +256,7 @@ class TrackOrderScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          SizedBox(
             width: 60,
             child: Column(
               children: [

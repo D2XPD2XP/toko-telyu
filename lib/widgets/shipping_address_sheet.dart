@@ -12,13 +12,13 @@ class ShippingAddressSheet extends StatefulWidget {
   onConfirm;
 
   const ShippingAddressSheet({
-    Key? key,
+    super.key,
     required this.deliveryArea,
     required this.currentSelection,
     required this.currentAddress,
     required this.shippingMethod,
     required this.onConfirm,
-  }) : super(key: key);
+  });
 
   @override
   State<ShippingAddressSheet> createState() => _ShippingAddressSheetState();
@@ -103,7 +103,7 @@ class _ShippingAddressSheetState extends State<ShippingAddressSheet> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 2,
                           offset: const Offset(0, 1),
                         ),
@@ -185,7 +185,7 @@ class _ShippingAddressSheetState extends State<ShippingAddressSheet> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 2,
                               offset: const Offset(0, 1),
                             ),
@@ -233,7 +233,7 @@ class _ShippingAddressSheetState extends State<ShippingAddressSheet> {
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 2,
                         offset: const Offset(0, 1),
                       ),
@@ -243,7 +243,8 @@ class _ShippingAddressSheetState extends State<ShippingAddressSheet> {
                     children: [
                       Expanded(
                         child: Text(
-                          widget.currentAddress!['street'],
+                          widget.currentAddress?['street'] ??
+                              'No address selected',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -252,7 +253,7 @@ class _ShippingAddressSheetState extends State<ShippingAddressSheet> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Icon(
+                      const Icon(
                         Icons.radio_button_checked,
                         color: Colors.white,
                         size: 24,

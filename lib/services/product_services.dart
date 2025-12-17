@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:toko_telyu/repositories/product_repositories.dart';
 import 'package:toko_telyu/services/cloudinary_service.dart';
 import 'package:uuid/uuid.dart';
@@ -58,6 +59,12 @@ class ProductService {
   // IMAGES
   // --------------------------
 
+  Future<String?> getFirstImageUrl(String productId) async {
+    final images = await _repo.getImages(productId);
+    if (images.isEmpty) return null;
+    return images.first.imageUrl;
+  }
+
   Future<ProductImage> addImage(String productId, String imageUrl) async {
     final image = ProductImage(const Uuid().v4(), imageUrl);
     await _repo.addImage(productId, image);
@@ -81,7 +88,7 @@ class ProductService {
     try {
       await CloudinaryService.deleteImage(img.imageUrl);
     } catch (e) {
-      print("Cloudinary delete failed: $e");
+      debugPrint("Cloudinary delete failed: $e");
     }
     await _repo.deleteImage(productId, imageId);
   }
@@ -123,6 +130,18 @@ class ProductService {
   // --------------------------
   // VARIANTS
   // --------------------------
+
+  Future<ProductVariant?> getVariantById(
+    String productId,
+    String variantId,
+  ) async {
+    final variants = await _repo.getVariants(productId);
+    try {
+      return variants.firstWhere((v) => v.variantId == variantId);
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<void> addVariant(
     String productId,

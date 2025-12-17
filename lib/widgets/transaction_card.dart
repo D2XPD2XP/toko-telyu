@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toko_telyu/enums/payment_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 
 class TransactionCard extends StatelessWidget {
   final TransactionStatus status;
   final String date;
-  final String productImage;
+  final Widget productImage;
   final String productName;
   final int itemCount;
   final double orderTotal;
+  final PaymentStatus paymentStatus;
   final VoidCallback? onTrackOrder;
   final VoidCallback? onReorder;
+  final VoidCallback? onPayNow;
   final VoidCallback onTap;
 
   const TransactionCard({
-    Key? key,
+    super.key,
     required this.status,
     required this.date,
     required this.productImage,
@@ -24,8 +27,10 @@ class TransactionCard extends StatelessWidget {
     required this.orderTotal,
     this.onTrackOrder,
     this.onReorder,
+    this.onPayNow,
     required this.onTap,
-  }) : super(key: key);
+    required this.paymentStatus,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,16 +39,55 @@ class TransactionCard extends StatelessWidget {
     String buttonText;
     VoidCallback? buttonAction;
 
-    if (status == TransactionStatus.outForDelivery) {
-      statusColor = const Color.fromARGB(255, 235, 212, 5);
-      statusText = "Out For Delivery";
-      buttonText = "Track Order";
-      buttonAction = onTrackOrder;
+    if (paymentStatus == PaymentStatus.pending) {
+      statusColor = const Color(0xFFF57C00);
+      statusText = "Awaiting Payment";
+      buttonText = "Pay Now";
+      buttonAction = onPayNow;
     } else {
-      statusColor = Colors.green.shade600;
-      statusText = "Completed";
-      buttonText = "Reorder";
-      buttonAction = onReorder;
+      switch (status) {
+        case TransactionStatus.pending:
+          statusColor = const Color(0xFF3F51B5);
+          statusText = "Order Received";
+          buttonText = "View Details";
+          buttonAction = null;
+          break;
+
+        case TransactionStatus.preparingForDelivery:
+          statusColor = const Color(0xFF5E35B1);
+          statusText = "Preparing Order";
+          buttonText = "View Details";
+          buttonAction = null;
+          break;
+
+        case TransactionStatus.readyForPickup:
+          statusColor = const Color(0xFF00897B);
+          statusText = "Ready for Pickup";
+          buttonText = "View Details";
+          buttonAction = null;
+          break;
+
+        case TransactionStatus.outForDelivery:
+          statusColor = const Color(0xFFFF9800);
+          statusText = "Out for Delivery";
+          buttonText = "Track Order";
+          buttonAction = onTrackOrder;
+          break;
+
+        case TransactionStatus.completed:
+          statusColor = const Color(0xFF2E7D32);
+          statusText = "Completed";
+          buttonText = "Reorder";
+          buttonAction = onReorder;
+          break;
+
+        case TransactionStatus.cancelled:
+          statusColor = const Color(0xFFD32F2F);
+          statusText = "Cancelled";
+          buttonText = "";
+          buttonAction = null;
+          break;
+      }
     }
 
     return Container(
@@ -51,8 +95,8 @@ class TransactionCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        splashColor: Color(0xFFED1E28).withOpacity(0.1),
-        highlightColor: Color(0xFFED1E28).withOpacity(0.05),
+        splashColor: const Color(0xFFED1E28).withValues(alpha: 0.1),
+        highlightColor: const Color(0xFFED1E28).withValues(alpha: 0.05),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -60,24 +104,24 @@ class TransactionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
-                blurRadius: 2,
-                offset: Offset(0, 3),
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 5,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Header Card ---
+              // HEADER
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.shopping_bag_outlined,
                     size: 20,
                     color: Color(0xFFED1E28),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -92,7 +136,7 @@ class TransactionCard extends StatelessWidget {
                       Text(date, style: GoogleFonts.poppins(fontSize: 11)),
                     ],
                   ),
-                  Expanded(child: Container()),
+                  const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -104,33 +148,29 @@ class TransactionCard extends StatelessWidget {
                     ),
                     child: Text(
                       statusText,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
                   ),
-
-                  // Container pembungkus untuk meratakan titik 3 ke kanan
                   Container(
                     width: 30,
                     alignment: Alignment.centerRight,
                     child: PopupMenuButton<String>(
                       color: Colors.white,
-                      onSelected: (String value) {
-                        print("Pilihan menu: $value");
+                      onSelected: (value) {
                         if (value == 'support') {
-                          // Navigasi ke halaman support
+                          // Navigate to support page
                         }
                       },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                            const PopupMenuItem<String>(
-                              value: 'support',
-                              child: Text('Customer Support'),
-                            ),
-                          ],
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'support',
+                          child: Text('Customer Support'),
+                        ),
+                      ],
                       icon: Icon(
                         Icons.more_vert,
                         size: 20,
@@ -142,9 +182,9 @@ class TransactionCard extends StatelessWidget {
                 ],
               ),
 
-              Divider(height: 24, thickness: 1, color: Colors.grey.shade200),
+              const Divider(height: 24, thickness: 1, color: Colors.grey),
 
-              // --- Detail Produk ---
+              // PRODUCT DETAIL
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -153,53 +193,48 @@ class TransactionCard extends StatelessWidget {
                     height: 47.17,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(15), // Radius 15
+                      borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 1,
+                          color: Colors.grey.withValues(alpha: 0.5),
                           blurRadius: 4,
-                          offset: Offset(0, 2),
+                          spreadRadius: 1,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Image.asset(
-                        productImage,
-                        width: 38.76,
-                        height: 34.92,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
+                    child: Center(child: productImage),
                   ),
+                  const SizedBox(width: 12),
 
-                  SizedBox(width: 12),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        productName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          productName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "$itemCount Items",
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w400,
-                          fontSize: 12,
+                        const SizedBox(height: 4),
+                        Text(
+                          "$itemCount Items",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
-              SizedBox(height: 16),
 
-              // --- Total Order & Tombol ---
+              // ORDER TOTAL & BUTTON
               Row(
                 children: [
                   Column(
@@ -216,33 +251,37 @@ class TransactionCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Expanded(child: Container()),
-                  SizedBox(
-                    height: 40,
-                    child: ElevatedButton(
-                      onPressed: buttonAction,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: status == TransactionStatus.completed
-                            ? Colors.white
-                            : Color(0xFFED1E28),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  const Spacer(),
+                  if (buttonAction != null)
+                    SizedBox(
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: buttonAction,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: status == TransactionStatus.completed
+                              ? Colors.white
+                              : const Color(0xFFED1E28),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          side: const BorderSide(
+                            color: Color(0xFFED1E28),
+                            width: 1,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                         ),
-                        side: BorderSide(color: Color(0xFFED1E28), width: 1),
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                      ),
-                      child: Text(
-                        buttonText,
-                        style: GoogleFonts.poppins(
-                          color: status == TransactionStatus.completed
-                              ? Color(0xFFED1E28)
-                              : Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          buttonText,
+                          style: GoogleFonts.poppins(
+                            color: status == TransactionStatus.completed
+                                ? const Color(0xFFED1E28)
+                                : Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ],

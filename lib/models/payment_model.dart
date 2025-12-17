@@ -1,38 +1,69 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:toko_telyu/enums/payment_status.dart';
 
-enum PaymentStatus { pending, success, failed, expired, refunded }
+PaymentStatus _parsePaymentStatus(String? status) {
+  switch (status) {
+    case "pending":
+      return PaymentStatus.pending;
+    case "completed":
+      return PaymentStatus.completed;
+    case "failed":
+      return PaymentStatus.failed;
+    default:
+      return PaymentStatus.pending;
+  }
+}
 
-class Payment {
+class PaymentModel {
   String paymentId;
-  String method;
-  PaymentStatus status;
+  String orderId;
+  String midtransTransactionId;
+  String paymentMethod;
+  PaymentStatus paymentStatus;
   int amount;
-  DateTime createdAt;
+  String? paymentUrl;
+  Map<String, dynamic> responseJson;
 
-  Payment({
+  PaymentModel({
     required this.paymentId,
-    required this.method,
-    required this.status,
+    required this.orderId,
+    required this.midtransTransactionId,
+    required this.paymentMethod,
+    required this.paymentStatus,
     required this.amount,
-    required this.createdAt,
+    this.paymentUrl,
+    required this.responseJson,
   });
 
-  factory Payment.fromFirestore(Map<String, dynamic> data, String id) {
-    return Payment(
+  String? get bank => responseJson["bank"];
+  String? get statusCode => responseJson["status_code"];
+  String? get vaNumber => responseJson["va_number"];
+  DateTime? get transactionTime {
+    if (responseJson["transaction_time"] == null) return null;
+    return DateTime.tryParse(responseJson["transaction_time"]);
+  }
+
+  factory PaymentModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return PaymentModel(
       paymentId: id,
-      method: data['method'] ?? "",
-      status: PaymentStatus.values.byName(data['status'] ?? "pending"),
+      orderId: data['order_id'] ?? "",
+      midtransTransactionId: data['midtrans_transaction_id'] ?? "",
+      paymentMethod: data['payment_method'] ?? "",
+      paymentStatus: _parsePaymentStatus(data['payment_status']),
       amount: data['amount'] ?? 0,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      paymentUrl: data['payment_url'],
+      responseJson: data['response_json'] ?? {},
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      "method": method,
-      "status": status.name,
+      "order_id": orderId,
+      "midtrans_transaction_id": midtransTransactionId,
+      "payment_method": paymentMethod,
+      "payment_status": paymentStatus.name,
       "amount": amount,
-      "createdAt": createdAt,
+      "payment_url": paymentUrl,
+      "response_json": responseJson,
     };
   }
 }
