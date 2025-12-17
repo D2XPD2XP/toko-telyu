@@ -7,8 +7,22 @@ class OrderRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final _uuid = const Uuid();
 
-  Future<QuerySnapshot<Map<String, dynamic>>> getAllOrders() async {
-    return FirebaseFirestore.instance.collection('order').get();
+  Future<List<OrderModel>> getAllOrders() async {
+    final snap = await FirebaseFirestore.instance.collection('order').get();
+    return snap.docs
+        .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))
+        .toList();
+  }
+
+  Future<List<OrderModel>> getOrdersByUserId(String userId) async {
+    final snap = await FirebaseFirestore.instance
+        .collection('order')
+        .where('user_id', isEqualTo: userId)
+        .get();
+
+    return snap.docs
+        .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))
+        .toList();
   }
 
   Future<String> createOrder(OrderModel order) async {
@@ -34,18 +48,6 @@ class OrderRepository {
 
   Future<void> deleteOrder(String orderId) async {
     await _db.collection('order').doc(orderId).delete();
-  }
-
-  Stream<List<OrderModel>> listenToCustomerOrders(String customerId) {
-    return _db
-        .collection('order')
-        .where('customerId', isEqualTo: customerId)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((d) => OrderModel.fromFirestore(d.data(), d.id))
-              .toList(),
-        );
   }
 
   Future<String> addOrderItem(String orderId, OrderItem item) async {

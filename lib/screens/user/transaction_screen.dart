@@ -34,6 +34,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
   List<OrderModel> _orders = [];
   bool _loading = true;
 
+  Map<String, Map<String, dynamic>> _orderPreview = {};
+
   // ===================== LIFECYCLE =====================
 
   @override
@@ -49,8 +51,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
       final orders = await _orderService.getAllOrders()
         ..sort((a, b) => b.orderDate.compareTo(a.orderDate));
 
-      if (!mounted) return;
+      // Load semua preview item sekaligus
+      for (final order in orders) {
+        _orderPreview[order.orderId] = await _loadItemPreview(order.orderId);
+      }
 
+      if (!mounted) return;
       setState(() {
         _orders = orders;
         _loading = false;
@@ -180,7 +186,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
     onPressed: onTap,
   );
 
-  Widget _loadingView() => const Center(child: CircularProgressIndicator());
+  Widget _loadingView() =>
+      const Center(child: CircularProgressIndicator(color: Color(0xFFED1E28)));
 
   Widget _listView(List<OrderModel> orders) => ListView(
     padding: EdgeInsets.zero,
@@ -191,38 +198,35 @@ class _TransactionScreenState extends State<TransactionScreen> {
   );
 
   Widget _transactionItem(OrderModel order) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _loadItemPreview(order.orderId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(height: 80);
-        }
+    final data = _orderPreview[order.orderId];
 
-        if (!snapshot.hasData) return const SizedBox.shrink();
+    if (data == null) {
+      // loading merah hanya untuk card yang belum siap
+      return SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator(color: Colors.red)),
+      );
+    }
 
-        final data = snapshot.data!;
-
-        return TransactionCard(
-          productImage: ProductImage(imageUrl: data['image'], size: 60),
-          status: order.orderStatus,
-          paymentStatus: order.paymentStatus,
-          date:
-              '${order.orderDate.day} ${_month(order.orderDate.month)} ${order.orderDate.year}',
-          productName: data['name'],
-          itemCount: data['count'],
-          orderTotal: order.totalAmount.toDouble(),
-          onTap: () => _openOrderDetail(order.orderId),
-          onPayNow: order.paymentStatus == PaymentStatus.pending
-              ? () => _openOrderDetail(order.orderId)
-              : null,
-          onTrackOrder: order.orderStatus == TransactionStatus.outForDelivery
-              ? () => _trackOrder(order.orderId)
-              : null,
-          onReorder: order.orderStatus == TransactionStatus.completed
-              ? () => _reorder(order.orderId)
-              : null,
-        );
-      },
+    return TransactionCard(
+      productImage: ProductImage(imageUrl: data['image'], size: 60),
+      status: order.orderStatus,
+      paymentStatus: order.paymentStatus,
+      date:
+          '${order.orderDate.day} ${_month(order.orderDate.month)} ${order.orderDate.year}',
+      productName: data['name'],
+      itemCount: data['count'],
+      orderTotal: order.totalAmount.toDouble(),
+      onTap: () => _openOrderDetail(order.orderId),
+      onPayNow: order.paymentStatus == PaymentStatus.pending
+          ? () => _openOrderDetail(order.orderId)
+          : null,
+      onTrackOrder: order.orderStatus == TransactionStatus.outForDelivery
+          ? () => _trackOrder(order.orderId)
+          : null,
+      onReorder: order.orderStatus == TransactionStatus.completed
+          ? () => _reorder(order.orderId)
+          : null,
     );
   }
 

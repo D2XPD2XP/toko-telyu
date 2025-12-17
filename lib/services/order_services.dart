@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:toko_telyu/enums/payment_status.dart';
+import 'package:toko_telyu/enums/role.dart';
 import 'package:toko_telyu/enums/shipping_method.dart';
 import 'package:toko_telyu/enums/shipping_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
@@ -7,6 +10,7 @@ import 'package:toko_telyu/models/order_model.dart';
 import 'package:toko_telyu/repositories/order_repositories.dart';
 import 'package:toko_telyu/services/midtrans_services.dart';
 import 'package:toko_telyu/services/payment_services.dart';
+import 'package:toko_telyu/services/user_services.dart';
 
 class CheckoutResult {
   final String orderId;
@@ -31,6 +35,8 @@ class OrderService {
   final OrderRepository _orderRepo;
   final PaymentService _paymentService;
   final MidtransService _midtransService;
+  UserService userService = UserService();
+  final storage = FlutterSecureStorage();
 
   OrderService({
     OrderRepository? orderRepository,
@@ -62,10 +68,23 @@ class OrderService {
   }
 
   Future<List<OrderModel>> getAllOrders() async {
-    final snap = await _orderRepo.getAllOrders();
-    return snap.docs
-        .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))
-        .toList();
+    try {
+      final user = await userService.loadUser();
+
+      if (user == null) {
+        throw Exception('User not found. Please login again.');
+      }
+
+      if (user.role == RoleEnum.ADMIN) {
+        return await _orderRepo.getAllOrders();
+      } else {
+        return await _orderRepo.getOrdersByUserId(user.userId);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error getAllOrders: $e');
+      debugPrint(stackTrace as String?);
+      return [];
+    }
   }
 
   Future<CheckoutResult> checkout({
