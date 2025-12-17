@@ -130,18 +130,6 @@ class SettingsScreen extends StatelessWidget {
           ),
 
           _buildMenuItem(
-            icon: Icons.store_mall_directory_rounded,
-            title: "Pickup Point Management",
-            iconBg: primaryColor.withOpacity(0.12),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PickupPointScreen()),
-              );
-            },
-          ),
-
-          _buildMenuItem(
             icon: Icons.logout_rounded,
             title: "Logout",
             iconBg: Colors.red.withOpacity(0.12),

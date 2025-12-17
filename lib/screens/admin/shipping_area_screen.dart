@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:toko_telyu/models/delivery_area.dart';
+import 'package:toko_telyu/services/delivery_area_services.dart';
+import 'package:toko_telyu/widgets/formatted_price.dart';
 
 class ShippingAreaScreen extends StatefulWidget {
   const ShippingAreaScreen({super.key});
@@ -9,38 +12,52 @@ class ShippingAreaScreen extends StatefulWidget {
 
 class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
   final Color primaryColor = const Color(0xFFED1E28);
-
-  final List<Map<String, dynamic>> _areas = [
-    {"city": "Jakarta", "cost": 10000},
-    {"city": "Bandung", "cost": 15000},
-  ];
-
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _costController = TextEditingController();
+  final DeliveryAreaService _deliveryAreaService = DeliveryAreaService();
+  List<DeliveryArea> _areas = [];
+  bool loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    setState(() {
+      loading = true;
+    });
+    _areas = await _deliveryAreaService.fetchAllAreas();
+    setState(() {
+      loading = false;
+    });
+  }
 
   // ---------------------------------------------------------
   // OPEN FORM (Add / Edit)
   // ---------------------------------------------------------
-  void _openAreaForm({Map<String, dynamic>? data, int? index}) {
+  void _openAreaForm({DeliveryArea? data, int? index}) {
     final isEdit = data != null;
 
-    _cityController.text = isEdit ? data["city"] : "";
-    _costController.text = isEdit ? data["cost"].toString() : "";
-
+    _cityController.text = isEdit ? data.getAreaname() : "";
+    _costController.text = isEdit ? data.getDeliveryfee().toString() : "";
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _buildFormSheet(isEdit: isEdit, index: index),
+      builder: (_) => isEdit
+          ? _buildFormSheet(id: data.getAreaId(), isEdit: isEdit, index: index)
+          : _buildFormSheet(isEdit: isEdit, index: index),
     );
   }
 
   // ---------------------------------------------------------
   // FORM BOTTOM SHEET UI
   // ---------------------------------------------------------
-  Widget _buildFormSheet({required bool isEdit, int? index}) {
+  Widget _buildFormSheet({String? id, required bool isEdit, int? index}) {
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -57,7 +74,7 @@ class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
           ),
           const SizedBox(height: 20),
 
-          _buildTextField(controller: _cityController, label: "City"),
+          _buildTextField(controller: _cityController, label: "Area Name"),
 
           const SizedBox(height: 14),
 
@@ -69,7 +86,7 @@ class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
 
           const SizedBox(height: 20),
 
-          _buildSaveButton(isEdit: isEdit, index: index),
+          _buildSaveButton(id: id, isEdit: isEdit, index: index),
 
           const SizedBox(height: 20),
         ],
@@ -103,7 +120,7 @@ class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
   // ---------------------------------------------------------
   // SAVE BUTTON
   // ---------------------------------------------------------
-  Widget _buildSaveButton({required bool isEdit, int? index}) {
+  Widget _buildSaveButton({String? id, required bool isEdit, int? index}) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -114,7 +131,8 @@ class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        onPressed: _onSavePressed(isEdit: isEdit, index: index),
+        onPressed: () async =>
+            _onSavePressed(id: id, isEdit: isEdit, index: index),
         child: Text(
           isEdit ? "Save Changes" : "Add Area",
           style: const TextStyle(fontSize: 16, color: Colors.white),
@@ -126,31 +144,35 @@ class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
   // ---------------------------------------------------------
   // SAVE LOGIC
   // ---------------------------------------------------------
-  VoidCallback _onSavePressed({required bool isEdit, int? index}) {
-    return () {
-      if (_cityController.text.isEmpty || _costController.text.isEmpty) return;
+  Future<void> _onSavePressed({
+    String? id,
+    required bool isEdit,
+    int? index,
+  }) async {
+    if (_cityController.text.isEmpty || _costController.text.isEmpty) return;
 
-      final newData = {
-        "city": _cityController.text,
-        "cost": int.tryParse(_costController.text) ?? 0,
-      };
+    if (isEdit && index != null) {
+      await _deliveryAreaService.updateArea(
+        id!,
+        _cityController.text,
+        double.parse(_costController.text),
+      );
+    } else {
+      await _deliveryAreaService.createArea(
+        _cityController.text,
+        double.parse(_costController.text),
+      );
+    }
 
-      setState(() {
-        if (isEdit && index != null) {
-          _areas[index] = newData;
-        } else {
-          _areas.add(newData);
-        }
-      });
+    await loadData();
 
-      Navigator.pop(context);
-    };
+    Navigator.pop(context);
   }
 
   // ---------------------------------------------------------
   // AREA ITEM CARD
   // ---------------------------------------------------------
-  Widget _buildAreaCard(Map<String, dynamic> area, int index) {
+  Widget _buildAreaCard(DeliveryArea area, int index) {
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
@@ -170,14 +192,15 @@ class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
         children: [
           Expanded(
             child: Text(
-              area["city"],
+              area.getAreaname(),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
 
-          Text(
-            "Rp ${area["cost"]}",
-            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+          FormattedPrice(
+            price: area.getDeliveryfee(),
+            size: 14,
+            fontWeight: FontWeight.w200,
           ),
 
           const SizedBox(width: 12),
@@ -190,8 +213,9 @@ class _ShippingAreaScreenState extends State<ShippingAreaScreen> {
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 22),
             color: Colors.red,
-            onPressed: () {
-              setState(() => _areas.removeAt(index));
+            onPressed: () async {
+              await _deliveryAreaService.deleteArea(area.getAreaId());
+              setState(() {});
             },
           ),
         ],

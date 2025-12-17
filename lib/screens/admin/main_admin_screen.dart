@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:toko_telyu/screens/admin/category_screen.dart';
-import 'package:toko_telyu/screens/admin/chat_screen.dart';
 import 'package:toko_telyu/screens/admin/orders_screen.dart';
 import 'package:toko_telyu/screens/admin/product_screen.dart';
 import 'package:toko_telyu/screens/admin/settings_screen.dart';
@@ -20,7 +19,6 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     SafeArea(child: OrdersScreen()),
     SafeArea(child: ProductScreen()),
     SafeArea(child: CategoryScreen()),
-    SafeArea(child: ChatScreen()),
     SafeArea(child: SettingsScreen()),
   ];
 
