@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -80,7 +81,7 @@ class CloudinaryService {
     }
 
     if (response.contains('"not_found"')) {
-      print("Cloudinary: image not found → $publicId");
+      debugPrint("Cloudinary: image not found → $publicId");
       return;
     }
   }

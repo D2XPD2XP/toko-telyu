@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:toko_telyu/models/order_model.dart';
+import 'package:toko_telyu/enums/transaction_status.dart';
+import 'package:toko_telyu/enums/shipping_method.dart';
+import 'package:toko_telyu/services/order_services.dart';
 
 class AdminOrderDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> order;
+  final OrderModel order;
 
   const AdminOrderDetailScreen({super.key, required this.order});
 
@@ -12,77 +16,90 @@ class AdminOrderDetailScreen extends StatefulWidget {
 
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   final Color primaryColor = const Color(0xFFED1E28);
+  final OrderService _service = OrderService();
 
-  static const String methodDelivery = "Delivery";
-  static const String methodPickup = "Pickup";
+  late OrderModel _order;
 
-  static const String sPending = "Pending";
-  static const String sPreparingPickup = "Preparing Pickup";
-  static const String sReadyPickup = "Ready for Pickup";
-  static const String sOnDelivery = "On Delivery";
-  static const String sCompleted = "Completed";
-  static const String sCancelled = "Cancelled";
+  @override
+  void initState() {
+    super.initState();
+    _order = widget.order;
+  }
 
-  // =============================================================
-  // STATUS → COLOR
-  // =============================================================
-  Color _statusColor(String status) {
+  Color _statusColor(TransactionStatus status) {
     switch (status) {
-      case sPending:
+      case TransactionStatus.pending:
         return Colors.orange;
-      case sPreparingPickup:
-        return Colors.amber;
-      case sReadyPickup:
+      case TransactionStatus.readyForPickup:
         return Colors.green;
-      case sOnDelivery:
+      case TransactionStatus.preparingForDelivery:
+        return Colors.yellow;
+      case TransactionStatus.outForDelivery:
         return Colors.blue;
-      case sCompleted:
+      case TransactionStatus.completed:
         return Colors.green;
-      case sCancelled:
+      case TransactionStatus.cancelled:
         return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 
-  // =============================================================
-  // STATUS → NEXT-STATUS LOGIC
-  // =============================================================
-  String _nextStatus(String current, String deliveryType) {
-    final isPickup = deliveryType == methodPickup;
+  TransactionStatus? _nextStatus() {
+    final current = _order.orderStatus;
+    final isPickup = _order.shippingMethod == ShippingMethod.pickup;
 
     if (isPickup) {
-      return {
-            sPending: sPreparingPickup,
-            sPreparingPickup: sReadyPickup,
-            sReadyPickup: sCompleted,
-          }[current] ??
-          current;
+      switch (current) {
+        case TransactionStatus.pending:
+          return TransactionStatus.readyForPickup;
+        case TransactionStatus.readyForPickup:
+          return TransactionStatus.completed;
+        default:
+          return null;
+      }
+    } else {
+      switch (current) {
+        case TransactionStatus.pending:
+          return TransactionStatus.outForDelivery;
+        case TransactionStatus.outForDelivery:
+          return TransactionStatus.completed;
+        default:
+          return null;
+      }
     }
-
-    return {sPending: sOnDelivery, sOnDelivery: sCompleted}[current] ?? current;
   }
 
-  // =============================================================
-  // MAIN UI
-  // =============================================================
+  void _updateStatus() async {
+    final next = _nextStatus();
+    if (next == null) return;
+
+    await _service.updateOrderStatus(_order.orderId, next);
+
+    if (!mounted) return; // FIX
+
+    setState(() => _order.orderStatus = next);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Status updated to ${next.name}"),
+        backgroundColor: primaryColor,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final order = widget.order;
-
-    final String dateFormatted = DateFormat(
+    final dateFormatted = DateFormat(
       'dd MMM yyyy, HH:mm',
-    ).format(order['date'] as DateTime);
-
-    final String totalFormatted = NumberFormat.currency(
+    ).format(_order.orderDate);
+    final totalFormatted = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp',
       decimalDigits: 0,
-    ).format(order['total']);
+    ).format(_order.totalAmount);
 
-    final String currentStatus = order['status'];
-    final bool isFinished =
-        currentStatus == sCompleted || currentStatus == sCancelled;
+    final isFinished =
+        _order.orderStatus == TransactionStatus.completed ||
+        _order.orderStatus == TransactionStatus.cancelled;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -100,72 +117,44 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ORDER SUMMARY
             _SectionTitle("Order Summary"),
             _OrderCard(
               children: [
-                _KeyValue("Order ID", order['id']),
-                _KeyValue("Customer", order['customerName']),
+                _KeyValue("Order ID", _order.orderId),
+                _KeyValue("Customer ID", _order.customerId),
                 _KeyValue("Date", dateFormatted),
                 _KeyValue("Total", totalFormatted, bold: true),
-                _StatusBadge(currentStatus, _statusColor(currentStatus)),
+                _StatusBadge(
+                  _order.orderStatus.name,
+                  _statusColor(_order.orderStatus),
+                ),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            // DELIVERY INFORMATION
             _SectionTitle("Delivery Information"),
             _OrderCard(
               children: [
-                _KeyValue("Method", order['deliveryType']),
-
-                if (order['deliveryType'] == methodDelivery) ...[
-                  _KeyValue("Address", "Jalan Mawar No. 123 (contoh)"),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () {},
-                    child: Text(
-                      "See on Google Maps",
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                _KeyValue("Method", _order.shippingMethod.name),
+                if (_order.shippingMethod == ShippingMethod.delivery) ...[
+                  _KeyValue(
+                    "Address",
+                    _order.shippingAddress?['fullAddress'] ?? "Not set",
                   ),
+                  const SizedBox(height: 8),
                 ],
-
-                if (order['deliveryType'] == methodPickup) ...[
+                if (_order.shippingMethod == ShippingMethod.pickup) ...[
                   _KeyValue("Pickup Point", "Store Kampus - Kantin Utama"),
-                  _KeyValue("Pickup Code", order['id'], bold: true),
+                  _KeyValue("Pickup Code", _order.orderId, bold: true),
                 ],
               ],
             ),
-
             const SizedBox(height: 24),
-
-            // UPDATE STATUS BUTTON
-            if (!isFinished)
+            if (!isFinished && _nextStatus() != null)
               _UpdateStatusButton(
                 primaryColor: primaryColor,
-                nextStatus: _nextStatus(currentStatus, order['deliveryType']),
-                onPressed: () {
-                  final next = _nextStatus(
-                    currentStatus,
-                    order['deliveryType'],
-                  );
-
-                  setState(() => order['status'] = next);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Status updated to $next"),
-                      backgroundColor: primaryColor,
-                    ),
-                  );
-                },
+                nextStatus: _nextStatus()!.name,
+                onPressed: _updateStatus,
               ),
-
             const SizedBox(height: 40),
           ],
         ),
@@ -173,12 +162,6 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     );
   }
 }
-
-//
-// =============================================================
-// REUSABLE COMPONENTS (PRIVATE WIDGETS)
-// =============================================================
-//
 
 class _SectionTitle extends StatelessWidget {
   final String text;
@@ -209,7 +192,7 @@ class _OrderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -278,7 +261,7 @@ class _StatusBadge extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(

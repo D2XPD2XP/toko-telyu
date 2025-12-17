@@ -3,16 +3,40 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:toko_telyu/enums/shipping_method.dart';
 import 'package:toko_telyu/models/cart_item.dart';
 import 'package:toko_telyu/models/delivery_area.dart';
-import 'package:toko_telyu/models/product.dart';
-import 'package:toko_telyu/models/product_image.dart';
-import 'package:toko_telyu/models/product_variant.dart';
+import 'package:toko_telyu/models/order_item_model.dart';
 import 'package:toko_telyu/models/user.dart';
+import 'package:toko_telyu/screens/user/edit_address_screen.dart';
+import 'package:toko_telyu/screens/user/payment_screen.dart';
 import 'package:toko_telyu/services/delivery_area_services.dart';
+import 'package:toko_telyu/services/order_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
-import 'package:toko_telyu/widgets/formatted_price.dart';
+import 'package:toko_telyu/widgets/checkout/checkout_payment_detail.dart';
+import 'package:toko_telyu/widgets/checkout/checkout_product_item.dart';
+import 'package:toko_telyu/widgets/checkout/checkout_shipping_card.dart';
+import 'package:toko_telyu/widgets/checkout/checkout_status_overlay.dart';
 import 'package:toko_telyu/widgets/shipping_address_sheet.dart';
 
+// =======================================================
+// CHECKOUT TOTAL MODEL
+// =======================================================
+class CheckoutTotals {
+  final double subtotal;
+  final double shippingCost;
+  final double serviceFee;
+  final double grandTotal;
+
+  const CheckoutTotals({
+    required this.subtotal,
+    required this.shippingCost,
+    required this.serviceFee,
+    required this.grandTotal,
+  });
+}
+
+// =======================================================
+// CHECKOUT SCREEN
+// =======================================================
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
 
@@ -23,251 +47,317 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  final Color primaryRed = const Color(0xFFED1E28);
-  final Color bgGrey = const Color(0xFFF5F5F5);
+  // ===================== SERVICES =====================
   final UserService _userService = UserService();
-  final ProductService productService = ProductService();
+  final ProductService _productService = ProductService();
   final DeliveryAreaService _deliveryAreaService = DeliveryAreaService();
+  final OrderService _orderService = OrderService();
 
-  User? user;
-  List<Widget> checkoutItem = [];
-  List<DeliveryArea> deliveryAreas = [];
-  bool loading = false;
-  ShippingMethod shippingMethod = ShippingMethod.delivery;
-  DeliveryArea? selectedAddress;
-  Map<String, dynamic>? currentAddress;
+  // ===================== CONSTANTS =====================
+  static const Color _primaryRed = Color(0xFFED1E28);
+  static const Color _bgGrey = Color(0xFFF5F5F5);
+  static const double _serviceFee = 1000;
 
+  // ===================== STATE =====================
+  User? _user;
+  bool _loading = false;
+
+  bool _showSuccessOverlay = false;
+  bool _showErrorOverlay = false;
+  String _errorMessage = "";
+
+  ShippingMethod _shippingMethod = ShippingMethod.delivery;
+  DeliveryArea? _selectedAddress;
+  Map<String, dynamic>? _currentAddress;
+
+  final List<Widget> _productWidgets = [];
+  List<DeliveryArea> _deliveryAreas = [];
+
+  // ===================== LIFECYCLE =====================
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadInitialData();
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      loading = true;
-    });
-    user = await _userService.loadUser();
-    checkoutItem.clear();
-    for (var item in widget.cartItems) {
-      final product = await productService.getProduct(item.productId);
-      final images = await productService.getImages(item.productId);
-      final variants = await productService.getVariants(item.productId);
-      final variant = variants.firstWhere((v) => item.variantId == v.variantId);
+  // ===================================================
+  // DATA LOADING
+  // ===================================================
+  Future<void> _loadInitialData() async {
+    setState(() => _loading = true);
 
-      checkoutItem.add(
-        _buildProductItem(product, variant, images.first, item.amount),
+    _user = await _userService.loadUser();
+    await Future.wait([_loadCheckoutProducts(), _loadDeliveryAreas()]);
+
+    _currentAddress = _user?.address;
+
+    setState(() => _loading = false);
+  }
+
+  Future<void> _loadCheckoutProducts() async {
+    _productWidgets.clear();
+
+    for (final item in widget.cartItems) {
+      final product = await _productService.getProduct(item.productId);
+      final images = await _productService.getImages(item.productId);
+      final variants = await _productService.getVariants(item.productId);
+
+      final variant = variants.firstWhere((v) => v.variantId == item.variantId);
+
+      _productWidgets.add(
+        CheckoutProductItem(
+          product: product,
+          variant: variant,
+          image: images.first,
+          qty: item.amount,
+        ),
       );
     }
-    deliveryAreas = await _deliveryAreaService.fetchAllAreas();
-    selectedAddress = deliveryAreas[0];
-    currentAddress = user!.address;
-    setState(() {
-      loading = false;
-    });
   }
 
-  void onConfirmShipping(
-    ShippingMethod newMethod,
-    DeliveryArea? newArea,
+  Future<void> _loadDeliveryAreas() async {
+    _deliveryAreas = await _deliveryAreaService.fetchAllAreas();
+    if (_deliveryAreas.isNotEmpty) {
+      _selectedAddress = _deliveryAreas.first;
+    }
+  }
+
+  // ===================================================
+  // SHIPPING
+  // ===================================================
+  void _onShippingConfirmed(
+    ShippingMethod method,
+    DeliveryArea? area,
     Map<String, dynamic>? address,
   ) {
     setState(() {
-      shippingMethod = newMethod;
-      selectedAddress = newArea;
-      currentAddress = address;
+      _shippingMethod = method;
+      _selectedAddress = area;
+      _currentAddress = address;
     });
   }
 
-  void _showAddressSelection() {
+  void _openShippingSelector() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return ShippingAddressSheet(
-          deliveryArea: deliveryAreas,
-          currentSelection: selectedAddress ?? deliveryAreas[0],
-          currentAddress: user!.address,
-          shippingMethod: shippingMethod,
-          onConfirm: onConfirmShipping,
-        );
-      },
+      builder: (_) => ShippingAddressSheet(
+        deliveryArea: _deliveryAreas,
+        currentSelection: _selectedAddress ?? _deliveryAreas.first,
+        currentAddress: _user!.address,
+        shippingMethod: _shippingMethod,
+        onConfirm: _onShippingConfirmed,
+      ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFFED1E28)),
-        ),
+  // ===================================================
+  // TOTAL CALCULATION
+  // ===================================================
+  CheckoutTotals _calculateTotals() {
+    final subtotal = widget.cartItems.fold<double>(
+      0,
+      (sum, item) => sum + item.subtotal,
+    );
+
+    final shippingCost = _resolveShippingCost();
+
+    return CheckoutTotals(
+      subtotal: subtotal,
+      shippingCost: shippingCost,
+      serviceFee: _serviceFee,
+      grandTotal: subtotal + shippingCost + _serviceFee,
+    );
+  }
+
+  double _resolveShippingCost() {
+    switch (_shippingMethod) {
+      case ShippingMethod.directDelivery:
+        return _selectedAddress?.getDeliveryfee() ?? 0;
+      case ShippingMethod.delivery:
+        return 3000;
+      case ShippingMethod.pickup:
+        return 0;
+    }
+  }
+
+  // ===================================================
+  // CHECKOUT PROCESS
+  // ===================================================
+  Future<void> _processCheckout(CheckoutTotals totals) async {
+    setState(() => _loading = true);
+
+    try {
+      final items = widget.cartItems
+          .map(
+            (cartItem) => OrderItem(
+              orderItemId: "",
+              productId: cartItem.productId,
+              variantId: cartItem.variantId,
+              subtotal: cartItem.subtotal,
+              amount: cartItem.amount,
+            ),
+          )
+          .toList();
+
+      final result = await _orderService.checkout(
+        customerId: _user!.userId,
+        items: items,
+        totalAmount: totals.grandTotal,
+        customerName: _user!.name,
+        customerEmail: _user!.email,
+        shippingAddress: _currentAddress ?? {},
+        shippingMethod: _shippingMethod,
+        shippingCost: totals.shippingCost,
       );
-    }
 
-    double serviceFee = 1000;
-    double totalPrice = 0;
-    for (var item in widget.cartItems) {
-      totalPrice += item.subtotal;
-    }
-    double shippingCost = (shippingMethod == ShippingMethod.directDelivery)
-        ? (selectedAddress?.getDeliveryfee() ?? 0)
-        : (shippingMethod == ShippingMethod.delivery ? 3000 : 0);
-    double grandTotal = totalPrice + serviceFee + shippingCost;
+      if (!mounted) return;
 
-    return Scaffold(
-      backgroundColor: bgGrey,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          "Checkout",
-          style: GoogleFonts.poppins(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+      setState(() => _showSuccessOverlay = true);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentScreen(
+            orderId: result.orderId,
+            transactionToken: result.transactionToken,
+            redirectUrl: result.redirectUrl,
           ),
         ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = e.toString().replaceFirst("Exception: ", "");
+        _showErrorOverlay = true;
+      });
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (mounted) setState(() => _showErrorOverlay = false);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  // ===================================================
+  // UI
+  // ===================================================
+  @override
+  Widget build(BuildContext context) {
+    final totals = _calculateTotals();
+
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: _bgGrey,
+          appBar: _buildAppBar(),
+          body: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(color: _primaryRed),
+                )
+              : SingleChildScrollView(child: _buildBody(totals)),
+          bottomNavigationBar: _buildBottomBar(totals),
+        ),
+
+        CheckoutStatusOverlay(
+          visible: _showSuccessOverlay,
+          icon: Icons.check_circle,
+          iconColor: Colors.green,
+          title: "Checkout Successful",
+          message:
+              "Your order is confirmed. Proceed to payment to complete the checkout.",
+        ),
+
+        CheckoutStatusOverlay(
+          visible: _showErrorOverlay,
+          icon: Icons.error,
+          iconColor: Colors.red,
+          title: "Checkout Failed",
+          message: _errorMessage,
+        ),
+      ],
+    );
+  }
+
+  // ===================================================
+  // APP BAR
+  // ===================================================
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.black),
+        onPressed: () => Navigator.pop(context),
       ),
-
-      body: Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                return checkoutItem[index];
-              },
-              itemCount: checkoutItem.length,
-            ),
-
-            const SizedBox(height: 16),
-
-            InkWell(
-              onTap: _showAddressSelection,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Shipping Option",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Icon(Icons.keyboard_arrow_right, color: Colors.black),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Payment Details",
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Payment Method",
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(),
-                  _buildDetailRow("Item Subtotal", totalPrice),
-                  if (shippingMethod != ShippingMethod.pickup)
-                    _buildDetailRow(
-                      "Total Shipping Cost",
-                      shippingMethod == ShippingMethod.directDelivery
-                          ? selectedAddress!.getDeliveryfee()
-                          : 3000,
-                    ),
-                  _buildDetailRow("Service Fee", serviceFee),
-                  const Divider(),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Order Total",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                      FormattedPrice(
-                        price: grandTotal,
-                        size: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 100),
-          ],
+      title: Text(
+        "Checkout",
+        style: GoogleFonts.poppins(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
         ),
       ),
+    );
+  }
 
-      bottomNavigationBar: Container(
+  // ===================================================
+  // BODY
+  // ===================================================
+  Widget _buildBody(CheckoutTotals totals) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildProductList(),
+          const SizedBox(height: 16),
+
+          CheckoutShippingCard(
+            method: _shippingMethod,
+            area: _selectedAddress,
+            address: _currentAddress,
+            onTap: _openShippingSelector,
+          ),
+
+          const SizedBox(height: 16),
+
+          CheckoutPaymentDetail(
+            subtotal: totals.subtotal,
+            shippingCost: totals.shippingCost,
+            serviceFee: totals.serviceFee,
+            grandTotal: totals.grandTotal,
+            shippingMethod: _shippingMethod,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _productWidgets.length,
+      itemBuilder: (_, i) => _productWidgets[i],
+    );
+  }
+
+  // ===================================================
+  // BOTTOM BAR (SAFE AREA)
+  // ===================================================
+  Widget _buildBottomBar(CheckoutTotals totals) {
+    return SafeArea(
+      top: false,
+      child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -277,9 +367,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           height: 50,
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () async {
+              if (_shippingMethod == ShippingMethod.delivery &&
+                  (_currentAddress?["street"] == null ||
+                      _currentAddress!["street"].toString().isEmpty)) {
+                _showEmptyAddressWarning();
+                return;
+              }
+
+              await _processCheckout(totals);
+            },
             style: ElevatedButton.styleFrom(
-              backgroundColor: primaryRed,
+              backgroundColor: _primaryRed,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -287,9 +386,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Text(
               "Check Out",
               style: GoogleFonts.poppins(
-                color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             ),
           ),
@@ -298,126 +397,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildProductItem(
-    Product product,
-    ProductVariant variant,
-    ProductImage image,
-    int quantity,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 3),
+  // ===================================================
+  // DIALOG
+  // ===================================================
+  void _showEmptyAddressWarning() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Address Required"),
+        content: const Text(
+          "To use delivery, please complete your address first.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
           ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 1,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Image.network(
-                image.imageUrl,
-                width: 60,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.productName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EditAddressScreen(
+                    userId: _user!.userId,
+                    value: _user!.address,
+                    onTap: _userService.handleAddress,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    variant.optionName,
-                    style: GoogleFonts.poppins(fontSize: 12),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    FormattedPrice(
-                      price: product.price,
-                      size: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: primaryRed),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        "x$quantity",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: primaryRed,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            },
+            child: const Text("Edit Address"),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, double price) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
-          ),
-          FormattedPrice(price: price, size: 12, fontWeight: FontWeight.w400),
         ],
       ),
     );

@@ -7,19 +7,29 @@ class OrderRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final _uuid = const Uuid();
 
+  Future<QuerySnapshot<Map<String, dynamic>>> getAllOrders() async {
+    return FirebaseFirestore.instance.collection('order').get();
+  }
+
   Future<String> createOrder(OrderModel order) async {
     await _db.collection('order').doc(order.orderId).set(order.toFirestore());
     return order.orderId;
   }
 
   Future<OrderModel?> getOrderById(String orderId) async {
-    final doc = await _db.collection('order').doc(orderId).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('order')
+        .doc(orderId)
+        .get();
     if (!doc.exists) return null;
     return OrderModel.fromFirestore(doc.data()!, doc.id);
   }
 
   Future<void> updateOrder(OrderModel order) async {
-    await _db.collection('order').doc(order.orderId).update(order.toFirestore());
+    await _db
+        .collection('order')
+        .doc(order.orderId)
+        .update(order.toFirestore());
   }
 
   Future<void> deleteOrder(String orderId) async {
@@ -31,8 +41,11 @@ class OrderRepository {
         .collection('order')
         .where('customerId', isEqualTo: customerId)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((d) => OrderModel.fromFirestore(d.data(), d.id)).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((d) => OrderModel.fromFirestore(d.data(), d.id))
+              .toList(),
+        );
   }
 
   Future<String> addOrderItem(String orderId, OrderItem item) async {
@@ -48,10 +61,11 @@ class OrderRepository {
 
   Future<List<OrderItem>> getOrderItems(String orderId) async {
     final snapshot = await _db
-        .collection('order')
+        .collection("order")
         .doc(orderId)
-        .collection('order_items')
+        .collection("order_items")
         .get();
+
     return snapshot.docs
         .map((d) => OrderItem.fromFirestore(d.data(), d.id))
         .toList();

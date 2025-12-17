@@ -1,1 +1,8 @@
-enum TransactionStatus { pending, readyForPickup, outForDelivery, completed, cancelled}
+enum TransactionStatus {
+  pending,
+  preparingForDelivery,
+  readyForPickup,
+  outForDelivery,
+  completed,
+  cancelled,
+}
