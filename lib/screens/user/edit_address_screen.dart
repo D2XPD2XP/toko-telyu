@@ -242,7 +242,6 @@ class _EditProfileScreenState extends State<EditAddressScreen> {
                 ),
                 child: TextField(
                   controller: _textController,
-                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(border: InputBorder.none),
                 ),
               ),
