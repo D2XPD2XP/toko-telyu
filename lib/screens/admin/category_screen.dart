@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:toko_telyu/models/product_category.dart';
@@ -32,7 +33,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     try {
       _categories = await _service.getCategories();
     } catch (e) {
-      print("Error loading categories: $e");
+      if (kDebugMode) {
+        print("Error loading categories: $e");
+      }
     }
     setState(() => _isLoading = false);
   }
@@ -127,7 +130,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               onChanged: (val) {
                                 setModalState(() => isFittable = val);
                               },
-                              activeColor: const Color(0xFFED1E28),
+                              activeThumbColor: const Color(0xFFED1E28),
                               materialTapTargetSize:
                                   MaterialTapTargetSize.shrinkWrap,
                             ),
@@ -203,6 +206,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         final name = nameCtrl.text.trim();
                         if (name.isEmpty) return;
 
+                        final navigator = Navigator.of(context);
+
                         if (category == null) {
                           await _service.createCategory(
                             name,
@@ -217,9 +222,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           });
                         }
 
-                        Navigator.pop(context);
+                        if (!mounted) return;
+                        navigator.pop();
                         _loadCategories();
                       },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFED1E28),
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -275,7 +282,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 5,
             offset: const Offset(0, 3),
           ),
@@ -291,7 +298,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     width: 50,
                     height: 50,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 50,
                       height: 50,
                       color: Colors.grey.shade200,

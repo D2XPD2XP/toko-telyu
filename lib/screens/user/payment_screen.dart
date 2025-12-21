@@ -147,7 +147,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             WebViewWidget(controller: controller),
             if (isLoading)
               Container(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 child: Center(
                   child: CircularProgressIndicator(
                     color: primaryRed,

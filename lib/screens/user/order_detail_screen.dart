@@ -337,7 +337,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          ProductImage(imageUrl: p['image']!, size: 64),
+          ProductImageView(imageUrl: p['image']!, size: 64),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

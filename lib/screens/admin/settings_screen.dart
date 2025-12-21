@@ -32,7 +32,7 @@ class SettingsScreen extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: .02),
               blurRadius: 3,
               offset: const Offset(0, 1),
             ),
@@ -120,7 +120,7 @@ class SettingsScreen extends StatelessWidget {
           _buildMenuItem(
             icon: Icons.location_on_rounded,
             title: "Shipping Area Management",
-            iconBg: primaryColor.withOpacity(0.12),
+            iconBg: primaryColor.withValues(alpha: .12),
             onTap: () {
               Navigator.push(
                 context,
@@ -132,7 +132,7 @@ class SettingsScreen extends StatelessWidget {
           _buildMenuItem(
             icon: Icons.store_mall_directory_rounded,
             title: "Pickup Point Management",
-            iconBg: primaryColor.withOpacity(0.12),
+            iconBg: primaryColor.withValues(alpha: .12),
             onTap: () {
               Navigator.push(
                 context,
@@ -144,7 +144,7 @@ class SettingsScreen extends StatelessWidget {
           _buildMenuItem(
             icon: Icons.logout_rounded,
             title: "Logout",
-            iconBg: Colors.red.withOpacity(0.12),
+            iconBg: Colors.red.withValues(alpha: .12),
             onTap: () {
               authServices.logout(context);
             },

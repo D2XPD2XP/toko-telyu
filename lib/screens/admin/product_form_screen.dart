@@ -101,6 +101,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final navigator = Navigator.of(context);
     final name = nameC.text;
     final price = formattedPrice(priceC.text);
     final desc = descC.text;
@@ -110,7 +111,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     Product product;
 
     if (widget.product == null) {
-      // CREATE NEW PRODUCT
       product = await _productService.createProduct(
         name,
         price,
@@ -118,7 +118,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         category,
       );
     } else {
-      // UPDATE EXISTING PRODUCT
       product = widget.product!;
       await _productService.updateProduct(id, {
         "product_name": name,
@@ -128,7 +127,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       });
     }
 
-    // HANDLE IMAGES
     List<ProductImage> savedImages = [];
     for (final img in images) {
       String imageUrl = img.imageUrl;
@@ -145,7 +143,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     await _productService.syncImages(product.productId, savedImages);
     await _productService.syncVariants(product.productId, variants);
 
-    Navigator.pop(context);
+    if (!mounted) return;
+    navigator.pop();
   }
 
   @override

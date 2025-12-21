@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toko_telyu/models/product.dart';
 import 'package:toko_telyu/screens/admin/product_form_screen.dart';
@@ -7,6 +8,7 @@ import 'package:toko_telyu/widgets/formatted_price.dart';
 import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/models/product_category.dart';
+import 'package:toko_telyu/widgets/product_image.dart';
 
 class ProductScreen extends StatefulWidget {
   const ProductScreen({super.key});
@@ -56,7 +58,9 @@ class _ProductScreenState extends State<ProductScreen> {
         _products = products;
       });
     } catch (e) {
-      print("ERROR loadAll => $e");
+      if (kDebugMode) {
+        print("ERROR loadAll => $e");
+      }
     } finally {
       setState(() => _isLoading = false);
     }
@@ -86,11 +90,12 @@ class _ProductScreenState extends State<ProductScreen> {
   // -------------------------------
   // IMAGE LOADER
   // -------------------------------
-  Widget _buildImage(String path) {
-    if (path.startsWith("http")) {
-      return Image.network(path, height: 55, width: 55, fit: BoxFit.cover);
-    }
-    return Image.asset(path, height: 55, width: 55, fit: BoxFit.cover);
+  Widget _buildImage(String? path) {
+    return ProductImageView(
+      imageUrl: path,
+      size: 55,
+      borderRadius: BorderRadius.circular(10),
+    );
   }
 
   // -------------------------------
@@ -138,7 +143,7 @@ class _ProductScreenState extends State<ProductScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 6,
                 offset: const Offset(0, 3),
               ),
@@ -169,7 +174,7 @@ class _ProductScreenState extends State<ProductScreen> {
         border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: .03),
             blurRadius: 5,
             offset: const Offset(0, 3),
           ),
@@ -181,20 +186,7 @@ class _ProductScreenState extends State<ProductScreen> {
           // IMAGE
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: imageUrl == null
-                ? Container(
-                    height: 55,
-                    width: 55,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      color: Colors.grey,
-                    ),
-                  )
-                : _buildImage(imageUrl),
+            child: _buildImage(imageUrl),
           ),
 
           const SizedBox(width: 14),
