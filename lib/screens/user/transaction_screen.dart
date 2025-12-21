@@ -34,7 +34,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   List<OrderModel> _orders = [];
   bool _loading = true;
 
-  Map<String, Map<String, dynamic>> _orderPreview = {};
+  final Map<String, Map<String, dynamic>> _orderPreview = {};
 
   // ===================== LIFECYCLE =====================
 
@@ -209,7 +209,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
     }
 
     return TransactionCard(
-      productImage: ProductImage(imageUrl: data['image'], size: 60),
+      productImage: ProductImageView(imageUrl: data['image'], size: 60),
       status: order.orderStatus,
       paymentStatus: order.paymentStatus,
       date:
