@@ -356,48 +356,54 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   )
                 : _orders.isEmpty
                 ? const Center(child: Text('No transactions found'))
-                : ListView.builder(
-                    controller: _scrollController,
-                    itemCount: _orders.length + (_hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index >= _orders.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFFED1E28),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final order = _orders[index];
-                      final preview =
-                          _orderPreview[order.orderId] ?? _emptyPreview();
-
-                      return TransactionCard(
-                        productImage: ProductImageView(
-                          imageUrl: preview['image'],
-                          size: 60,
-                        ),
-                        status: order.orderStatus,
-                        paymentStatus: order.paymentStatus,
-                        date:
-                            '${order.orderDate.day} ${_month(order.orderDate.month)} ${order.orderDate.year}',
-                        productName: preview['name'],
-                        itemCount: preview['count'],
-                        orderTotal: order.totalAmount,
-                        onTap: () => _openOrderDetail(order.orderId),
-                        onPayNow: order.paymentStatus == PaymentStatus.pending
-                            ? () => _openOrderDetail(order.orderId)
-                            : null,
-                        onTrackOrder:
-                            order.orderStatus ==
-                                TransactionStatus.outForDelivery
-                            ? () => _trackOrder(order.orderId)
-                            : null,
-                      );
+                : RefreshIndicator(
+                    color: const Color(0xFFED1E28),
+                    onRefresh: () async {
+                      await _loadOrders(reset: true);
                     },
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _orders.length + (_hasMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index >= _orders.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFED1E28),
+                              ),
+                            ),
+                          );
+                        }
+
+                        final order = _orders[index];
+                        final preview =
+                            _orderPreview[order.orderId] ?? _emptyPreview();
+
+                        return TransactionCard(
+                          productImage: ProductImageView(
+                            imageUrl: preview['image'],
+                            size: 60,
+                          ),
+                          status: order.orderStatus,
+                          paymentStatus: order.paymentStatus,
+                          date:
+                              '${order.orderDate.day} ${_month(order.orderDate.month)} ${order.orderDate.year}',
+                          productName: preview['name'],
+                          itemCount: preview['count'],
+                          orderTotal: order.totalAmount,
+                          onTap: () => _openOrderDetail(order.orderId),
+                          onPayNow: order.paymentStatus == PaymentStatus.pending
+                              ? () => _openOrderDetail(order.orderId)
+                              : null,
+                          onTrackOrder:
+                              order.orderStatus ==
+                                  TransactionStatus.outForDelivery
+                              ? () => _trackOrder(order.orderId)
+                              : null,
+                        );
+                      },
+                    ),
                   ),
           ),
         ],
