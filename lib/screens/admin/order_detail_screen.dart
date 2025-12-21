@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:toko_telyu/models/delivery_area.dart';
 import 'package:toko_telyu/models/order_model.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
 import 'package:toko_telyu/enums/shipping_method.dart';
 import 'package:toko_telyu/enums/payment_status.dart';
+import 'package:toko_telyu/services/delivery_area_services.dart';
 import 'package:toko_telyu/services/order_services.dart';
 
 class AdminOrderDetailScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class AdminOrderDetailScreen extends StatefulWidget {
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   final Color primaryColor = const Color(0xFFED1E28);
   final OrderService _service = OrderService();
+  final DeliveryAreaService _deliveryAreaService = DeliveryAreaService();
   late OrderModel _order;
   bool _loading = false;
 
@@ -28,16 +31,20 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
 
   TransactionStatus? _nextStatus() {
     if (_order.paymentStatus == PaymentStatus.pending) return null;
-
     switch (_order.orderStatus) {
       case TransactionStatus.pending:
-        return _order.shippingMethod == ShippingMethod.delivery
-            ? TransactionStatus.preparingForDelivery
-            : TransactionStatus.readyForPickup;
+        if (_order.shippingMethod == ShippingMethod.delivery) {
+          return TransactionStatus.preparingForDelivery;
+        } else if (_order.shippingMethod == ShippingMethod.pickup) {
+          return TransactionStatus.readyForPickup;
+        } else if (_order.shippingMethod == ShippingMethod.directDelivery) {
+          return TransactionStatus.outForDelivery;
+        }
+        return null;
       case TransactionStatus.preparingForDelivery:
-        return TransactionStatus.outForDelivery;
-      case TransactionStatus.readyForPickup:
       case TransactionStatus.outForDelivery:
+        return TransactionStatus.completed;
+      case TransactionStatus.readyForPickup:
         return TransactionStatus.completed;
       default:
         return null;
@@ -48,7 +55,6 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     if (_order.paymentStatus == PaymentStatus.pending) {
       return "Waiting for Payment";
     }
-
     switch (status) {
       case TransactionStatus.pending:
         return "Processing Order";
@@ -93,7 +99,6 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     final city = address['city'] ?? '';
     final province = address['province'] ?? '';
     final postalCode = address['postal_code'] ?? '';
-
     final parts = [
       street,
       district,
@@ -104,10 +109,20 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     return parts.join(', ');
   }
 
+  String displayShippingMethod(ShippingMethod method) {
+    switch (method) {
+      case ShippingMethod.delivery:
+        return "Delivery";
+      case ShippingMethod.pickup:
+        return "Pickup";
+      case ShippingMethod.directDelivery:
+        return "Direct Delivery";
+    }
+  }
+
   Future<void> _updateStatus() async {
     final next = _nextStatus();
     if (next == null) return;
-
     setState(() => _loading = true);
     try {
       await _service.updateOrderStatus(_order.orderId, next);
@@ -142,7 +157,6 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
       symbol: 'Rp',
       decimalDigits: 0,
     ).format(_order.totalAmount);
-
     final isFinished =
         _order.orderStatus == TransactionStatus.completed ||
         _order.orderStatus == TransactionStatus.cancelled;
@@ -181,12 +195,34 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             _SectionTitle("Delivery Information"),
             _OrderCard(
               children: [
-                _KeyValue("Method", _order.shippingMethod.name.toUpperCase()),
+                _KeyValue(
+                  "Method",
+                  displayShippingMethod(_order.shippingMethod),
+                ),
                 if (_order.shippingMethod == ShippingMethod.delivery)
                   _KeyValue(
                     "Address",
                     formatShippingAddress(_order.shippingAddress),
+                  )
+                else if (_order.shippingMethod == ShippingMethod.directDelivery)
+                  FutureBuilder<DeliveryArea?>(
+                    future: _deliveryAreaService.fetchArea(
+                      _order.deliveryAreaId!,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _KeyValue("Delivery Area", "Loading...");
+                      } else if (snapshot.hasError || snapshot.data == null) {
+                        return _KeyValue("Delivery Area", "Not set");
+                      } else {
+                        return _KeyValue(
+                          "Delivery Area",
+                          snapshot.data!.getAreaname(),
+                        );
+                      }
+                    },
                   ),
+
                 if (_order.shippingMethod == ShippingMethod.pickup) ...[
                   _KeyValue("Pickup Point", "Store Kampus - Kantin Utama"),
                   _KeyValue("Pickup Code", _order.orderId, bold: true),
@@ -260,7 +296,7 @@ class _OrderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -325,7 +361,7 @@ class _StatusBadge extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
+            color: color.withOpacity(0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
