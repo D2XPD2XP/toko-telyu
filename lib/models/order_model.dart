@@ -25,6 +25,8 @@ TransactionStatus _parseTransactionStatus(String? status) {
 
 ShippingMethod _parseShippingMethod(String? method) {
   switch (method) {
+    case "directDelivery":
+      return ShippingMethod.directDelivery;
     case "delivery":
       return ShippingMethod.delivery;
     case "pickup":
@@ -85,8 +87,9 @@ class OrderModel {
       orderStatus: _parseTransactionStatus(data['order_status']),
       shippingMethod: _parseShippingMethod(data['shipping_method']),
       shippingStatus: _parseShippingStatus(data['shipping_status']),
-      shippingAddress: data['shipping_address']
-          ? data['shipping_address']
+      shippingAddress:
+          data['shipping_address'] != null && data['shipping_address'] is Map
+          ? Map<String, dynamic>.from(data['shipping_address'])
           : null,
       orderDate: (data['order_date'] as Timestamp).toDate(),
       shippingDate: data['shipping_date'] != null

@@ -134,6 +134,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _shippingMethod = method;
       _selectedAddress = area;
       _currentAddress = address;
+
+      if (_shippingMethod == ShippingMethod.directDelivery && area != null) {
+        _currentAddress = {
+          ...?_currentAddress,
+          "delivery_area_id": _selectedAddress?.getAreaId(),
+        };
+      } else if (_shippingMethod != ShippingMethod.directDelivery) {
+        _currentAddress?.remove("delivery_area_id");
+      }
     });
   }
 

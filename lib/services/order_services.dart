@@ -81,8 +81,9 @@ class OrderService {
         return await _orderRepo.getOrdersByUserId(user.userId);
       }
     } catch (e, stackTrace) {
+      // Cetak error dengan benar
       debugPrint('Error getAllOrders: $e');
-      debugPrint(stackTrace as String?);
+      debugPrintStack(stackTrace: stackTrace);
       return [];
     }
   }
@@ -103,6 +104,7 @@ class OrderService {
       shippingMethod: shippingMethod,
       shippingAddress: shippingAddress,
       shippingCost: shippingCost,
+      deliveryAreaId: shippingAddress['delivery_area_id'],
     );
 
     await _orderRepo.createOrder(order);
@@ -166,6 +168,7 @@ class OrderService {
     required ShippingMethod shippingMethod,
     required Map<String, dynamic> shippingAddress,
     required double shippingCost,
+    String? deliveryAreaId,
   }) {
     return OrderModel(
       orderId: _generateOrderId(),
@@ -175,7 +178,7 @@ class OrderService {
       shippingMethod: shippingMethod,
       shippingStatus: null,
       shippingAddress: shippingAddress,
-      deliveryAreaId: shippingAddress['deliveryAreaId'],
+      deliveryAreaId: deliveryAreaId,
       orderDate: DateTime.now(),
       shippingDate: null,
       totalAmount: totalAmount,
