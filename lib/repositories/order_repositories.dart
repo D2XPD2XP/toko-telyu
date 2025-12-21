@@ -8,7 +8,11 @@ class OrderRepository {
   final _uuid = const Uuid();
 
   Future<List<OrderModel>> getAllOrders() async {
-    final snap = await FirebaseFirestore.instance.collection('order').get();
+    final snap = await FirebaseFirestore.instance
+        .collection('order')
+        .orderBy('order_date', descending: true)
+        .get();
+
     return snap.docs
         .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))
         .toList();

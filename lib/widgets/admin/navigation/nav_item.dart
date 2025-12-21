@@ -26,7 +26,7 @@ class NavItem extends StatelessWidget {
         ),
         decoration: isActive
             ? BoxDecoration(
-                color: const Color(0xFFED1E28).withOpacity(0.15),
+                color: const Color(0xFFED1E28).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               )
             : null,

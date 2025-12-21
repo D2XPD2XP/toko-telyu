@@ -29,9 +29,13 @@ class _ProductImageModalState extends State<ProductImageModal> {
       // Upload ke Cloudinary
       final imageUrl = await CloudinaryService.uploadImage(file);
 
+      if (!mounted) return;
+
       widget.onAdd(imageUrl);
       Navigator.pop(context);
     } catch (e) {
+      if (!mounted) return;
+
       setState(() => isLoading = false);
 
       ScaffoldMessenger.of(
@@ -89,7 +93,7 @@ class _ProductImageModalState extends State<ProductImageModal> {
         if (isLoading)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               child: const Center(
                 child: CircularProgressIndicator(color: Color(0xFFED1E28)),
               ),

@@ -66,7 +66,7 @@ class ProductImageListSection extends StatelessWidget {
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         color: Colors.grey[300],
                         child: const Icon(Icons.broken_image),
                       ),

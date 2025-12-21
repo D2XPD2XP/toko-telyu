@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:toko_telyu/models/delivery_area.dart';
 import 'package:toko_telyu/models/order_model.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
 import 'package:toko_telyu/enums/shipping_method.dart';
+import 'package:toko_telyu/enums/payment_status.dart';
+import 'package:toko_telyu/services/delivery_area_services.dart';
 import 'package:toko_telyu/services/order_services.dart';
 
 class AdminOrderDetailScreen extends StatefulWidget {
   final OrderModel order;
-
   const AdminOrderDetailScreen({super.key, required this.order});
 
   @override
@@ -17,8 +19,9 @@ class AdminOrderDetailScreen extends StatefulWidget {
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   final Color primaryColor = const Color(0xFFED1E28);
   final OrderService _service = OrderService();
-
+  final DeliveryAreaService _deliveryAreaService = DeliveryAreaService();
   late OrderModel _order;
+  bool _loading = false;
 
   @override
   void initState() {
@@ -26,64 +29,122 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     _order = widget.order;
   }
 
-  Color _statusColor(TransactionStatus status) {
+  TransactionStatus? _nextStatus() {
+    if (_order.paymentStatus == PaymentStatus.pending) return null;
+    switch (_order.orderStatus) {
+      case TransactionStatus.pending:
+        if (_order.shippingMethod == ShippingMethod.delivery) {
+          return TransactionStatus.preparingForDelivery;
+        } else if (_order.shippingMethod == ShippingMethod.pickup) {
+          return TransactionStatus.readyForPickup;
+        } else if (_order.shippingMethod == ShippingMethod.directDelivery) {
+          return TransactionStatus.outForDelivery;
+        }
+        return null;
+      case TransactionStatus.preparingForDelivery:
+      case TransactionStatus.outForDelivery:
+        return TransactionStatus.completed;
+      case TransactionStatus.readyForPickup:
+        return TransactionStatus.completed;
+      default:
+        return null;
+    }
+  }
+
+  String _statusLabel(TransactionStatus status) {
+    if (_order.paymentStatus == PaymentStatus.pending) {
+      return "Waiting for Payment";
+    }
     switch (status) {
       case TransactionStatus.pending:
-        return Colors.orange;
-      case TransactionStatus.readyForPickup:
-        return Colors.green;
+        return "Processing Order";
       case TransactionStatus.preparingForDelivery:
-        return Colors.yellow;
+        return "Preparing for Delivery";
+      case TransactionStatus.readyForPickup:
+        return "Ready for Pickup";
       case TransactionStatus.outForDelivery:
-        return Colors.blue;
+        return "Out for Delivery";
       case TransactionStatus.completed:
-        return Colors.green;
+        return "Completed";
       case TransactionStatus.cancelled:
+        return "Cancelled";
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case "Waiting for Payment":
+        return Colors.orange;
+      case "Processing Order":
+        return Colors.blue;
+      case "Preparing for Delivery":
+        return Colors.amber.shade700;
+      case "Ready for Pickup":
+        return Colors.green.shade700;
+      case "Out for Delivery":
+        return Colors.blue.shade700;
+      case "Completed":
+        return Colors.green;
+      case "Cancelled":
         return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
-  TransactionStatus? _nextStatus() {
-    final current = _order.orderStatus;
-    final isPickup = _order.shippingMethod == ShippingMethod.pickup;
+  String formatShippingAddress(Map<String, dynamic>? address) {
+    if (address == null) return "Not set";
+    final street = address['street'] ?? '';
+    final district = address['district'] ?? '';
+    final city = address['city'] ?? '';
+    final province = address['province'] ?? '';
+    final postalCode = address['postal_code'] ?? '';
+    final parts = [
+      street,
+      district,
+      city,
+      province,
+      postalCode,
+    ].where((p) => p.isNotEmpty).toList();
+    return parts.join(', ');
+  }
 
-    if (isPickup) {
-      switch (current) {
-        case TransactionStatus.pending:
-          return TransactionStatus.readyForPickup;
-        case TransactionStatus.readyForPickup:
-          return TransactionStatus.completed;
-        default:
-          return null;
-      }
-    } else {
-      switch (current) {
-        case TransactionStatus.pending:
-          return TransactionStatus.outForDelivery;
-        case TransactionStatus.outForDelivery:
-          return TransactionStatus.completed;
-        default:
-          return null;
-      }
+  String displayShippingMethod(ShippingMethod method) {
+    switch (method) {
+      case ShippingMethod.delivery:
+        return "Delivery";
+      case ShippingMethod.pickup:
+        return "Pickup";
+      case ShippingMethod.directDelivery:
+        return "Direct Delivery";
     }
   }
 
-  void _updateStatus() async {
+  Future<void> _updateStatus() async {
     final next = _nextStatus();
     if (next == null) return;
-
-    await _service.updateOrderStatus(_order.orderId, next);
-
-    if (!mounted) return; // FIX
-
-    setState(() => _order.orderStatus = next);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Status updated to ${next.name}"),
-        backgroundColor: primaryColor,
-      ),
-    );
+    setState(() => _loading = true);
+    try {
+      await _service.updateOrderStatus(_order.orderId, next);
+      if (!mounted) return;
+      setState(() => _order.orderStatus = next);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Status updated to ${_statusLabel(next)}"),
+          backgroundColor: primaryColor,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update status: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -96,10 +157,10 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
       symbol: 'Rp',
       decimalDigits: 0,
     ).format(_order.totalAmount);
-
     final isFinished =
         _order.orderStatus == TransactionStatus.completed ||
         _order.orderStatus == TransactionStatus.cancelled;
+    final nextStatus = _nextStatus();
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -125,8 +186,8 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                 _KeyValue("Date", dateFormatted),
                 _KeyValue("Total", totalFormatted, bold: true),
                 _StatusBadge(
-                  _order.orderStatus.name,
-                  _statusColor(_order.orderStatus),
+                  _statusLabel(_order.orderStatus),
+                  _statusColor(_statusLabel(_order.orderStatus)),
                 ),
               ],
             ),
@@ -134,14 +195,34 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             _SectionTitle("Delivery Information"),
             _OrderCard(
               children: [
-                _KeyValue("Method", _order.shippingMethod.name),
-                if (_order.shippingMethod == ShippingMethod.delivery) ...[
+                _KeyValue(
+                  "Method",
+                  displayShippingMethod(_order.shippingMethod),
+                ),
+                if (_order.shippingMethod == ShippingMethod.delivery)
                   _KeyValue(
                     "Address",
-                    _order.shippingAddress?['fullAddress'] ?? "Not set",
+                    formatShippingAddress(_order.shippingAddress),
+                  )
+                else if (_order.shippingMethod == ShippingMethod.directDelivery)
+                  FutureBuilder<DeliveryArea?>(
+                    future: _deliveryAreaService.fetchArea(
+                      _order.deliveryAreaId!,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _KeyValue("Delivery Area", "Loading...");
+                      } else if (snapshot.hasError || snapshot.data == null) {
+                        return _KeyValue("Delivery Area", "Not set");
+                      } else {
+                        return _KeyValue(
+                          "Delivery Area",
+                          snapshot.data!.getAreaname(),
+                        );
+                      }
+                    },
                   ),
-                  const SizedBox(height: 8),
-                ],
+
                 if (_order.shippingMethod == ShippingMethod.pickup) ...[
                   _KeyValue("Pickup Point", "Store Kampus - Kantin Utama"),
                   _KeyValue("Pickup Code", _order.orderId, bold: true),
@@ -149,11 +230,35 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            if (!isFinished && _nextStatus() != null)
-              _UpdateStatusButton(
-                primaryColor: primaryColor,
-                nextStatus: _nextStatus()!.name,
-                onPressed: _updateStatus,
+            if (!isFinished && nextStatus != null)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _updateStatus,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: _loading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          "Update Status → ${_statusLabel(nextStatus)}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
               ),
             const SizedBox(height: 40),
           ],
@@ -166,7 +271,6 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
 class _SectionTitle extends StatelessWidget {
   final String text;
   const _SectionTitle(this.text);
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -182,17 +286,17 @@ class _SectionTitle extends StatelessWidget {
 class _OrderCard extends StatelessWidget {
   final List<Widget> children;
   const _OrderCard({required this.children});
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -210,9 +314,7 @@ class _KeyValue extends StatelessWidget {
   final String keyText;
   final String valueText;
   final bool bold;
-
   const _KeyValue(this.keyText, this.valueText, {this.bold = false});
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -246,9 +348,7 @@ class _KeyValue extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   final String status;
   final Color color;
-
   const _StatusBadge(this.status, this.color);
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -261,7 +361,7 @@ class _StatusBadge extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
+            color: color.withOpacity(0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -274,35 +374,6 @@ class _StatusBadge extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _UpdateStatusButton extends StatelessWidget {
-  final Color primaryColor;
-  final String nextStatus;
-  final VoidCallback onPressed;
-
-  const _UpdateStatusButton({
-    required this.primaryColor,
-    required this.nextStatus,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        minimumSize: const Size(double.infinity, 48),
-      ),
-      child: Text(
-        "Update Status → $nextStatus",
-        style: const TextStyle(fontSize: 16, color: Colors.white),
-      ),
     );
   }
 }
