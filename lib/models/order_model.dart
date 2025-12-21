@@ -5,17 +5,18 @@ import 'package:toko_telyu/enums/shipping_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
 
 TransactionStatus _parseTransactionStatus(String? status) {
-  switch (status) {
-    case "pending":
+  switch (status?.toUpperCase()) {
+    case "PENDING":
       return TransactionStatus.pending;
-    case "ready_for_pickup":
+    case "PREPARINGFORDELIVERY":
+      return TransactionStatus.preparingForDelivery;
+    case "READYFORPICKUP":
       return TransactionStatus.readyForPickup;
-    case "out_for_delivery":
-    case "shipped":
+    case "OUTFORDELIVERY":
       return TransactionStatus.outForDelivery;
-    case "completed":
+    case "COMPLETED":
       return TransactionStatus.completed;
-    case "cancelled":
+    case "CANCELLED":
       return TransactionStatus.cancelled;
     default:
       return TransactionStatus.pending;
@@ -84,7 +85,9 @@ class OrderModel {
       orderStatus: _parseTransactionStatus(data['order_status']),
       shippingMethod: _parseShippingMethod(data['shipping_method']),
       shippingStatus: _parseShippingStatus(data['shipping_status']),
-      shippingAddress: data['shipping_address'],
+      shippingAddress: data['shipping_address']
+          ? data['shipping_address']
+          : null,
       orderDate: (data['order_date'] as Timestamp).toDate(),
       shippingDate: data['shipping_date'] != null
           ? (data['shipping_date'] as Timestamp).toDate()
@@ -100,7 +103,7 @@ class OrderModel {
     return {
       'order_id': orderId,
       'user_id': customerId,
-      'order_status': orderStatus.name,
+      'order_status': orderStatus.name.toUpperCase(),
       'shipping_method': shippingMethod.name,
       'shipping_status': shippingStatus?.name,
       'shipping_address': shippingAddress,

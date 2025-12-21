@@ -129,12 +129,14 @@ class OrderService {
     );
   }
 
-  Future<void> updateOrderStatus(
-    String orderId,
-    TransactionStatus status,
-  ) async {
+  Future<void> updateOrderStatus(String orderId, TransactionStatus next) async {
     final order = await getOrderById(orderId);
-    order.orderStatus = status;
+
+    if (order.paymentStatus != PaymentStatus.completed) {
+      throw Exception('Cannot update status before payment completed');
+    }
+
+    order.orderStatus = next;
     await _orderRepo.updateOrder(order);
   }
 
@@ -213,4 +215,25 @@ class OrderService {
   }
 
   String _generateOrderId() => "ORDER-${DateTime.now().millisecondsSinceEpoch}";
+
+  TransactionStatus? getNextStatus(OrderModel order) {
+    if (order.paymentStatus != PaymentStatus.completed) return null;
+
+    switch (order.orderStatus) {
+      case TransactionStatus.pending:
+        return order.shippingMethod == ShippingMethod.delivery
+            ? TransactionStatus.preparingForDelivery
+            : TransactionStatus.readyForPickup;
+
+      case TransactionStatus.preparingForDelivery:
+        return TransactionStatus.outForDelivery;
+
+      case TransactionStatus.readyForPickup:
+      case TransactionStatus.outForDelivery:
+        return TransactionStatus.completed;
+
+      default:
+        return null;
+    }
+  }
 }
