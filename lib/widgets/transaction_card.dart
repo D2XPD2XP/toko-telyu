@@ -44,6 +44,11 @@ class TransactionCard extends StatelessWidget {
       statusText = "Awaiting Payment";
       buttonText = "Pay Now";
       buttonAction = onPayNow;
+    } else if (paymentStatus == PaymentStatus.failed) {
+      statusColor = const Color(0xFFD32F2F);
+      statusText = "Cancelled";
+      buttonText = "";
+      buttonAction = null;
     } else {
       switch (status) {
         case TransactionStatus.pending:
