@@ -76,7 +76,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
     try {
       final statusList = _selectedStatus != null
-          ? [_selectedStatus!.name]
+          ? [_selectedStatus!.name.toUpperCase()]
           : null;
 
       final result = await _orderService.getOrdersPage(
@@ -87,7 +87,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
       var filteredOrders = result.orders;
 
-      // Apply date filter tetap di client
       if (_selectedDateRange != null && _selectedDateRange != 'All Dates') {
         final now = DateTime.now();
         filteredOrders = filteredOrders.where((o) {

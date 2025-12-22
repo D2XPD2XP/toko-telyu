@@ -4,20 +4,35 @@ import 'package:toko_telyu/enums/shipping_method.dart';
 import 'package:toko_telyu/enums/shipping_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
 
+String transactionStatusToFirestore(TransactionStatus status) {
+  switch (status) {
+    case TransactionStatus.pending:
+      return 'PENDING';
+    case TransactionStatus.readyForPickup:
+      return 'READYFORPICKUP';
+    case TransactionStatus.outForDelivery:
+      return 'OUTFORDELIVERY';
+    case TransactionStatus.completed:
+      return 'COMPLETED';
+    case TransactionStatus.cancelled:
+      return 'CANCELLED';
+  }
+}
+
 TransactionStatus _parseTransactionStatus(String? status) {
   switch (status?.toUpperCase()) {
-    case "PENDING":
+    case 'PENDING':
       return TransactionStatus.pending;
-    case "READYFORPICKUP":
+    case 'READYFORPICKUP':
       return TransactionStatus.readyForPickup;
-    case "OUTFORDELIVERY":
+    case 'OUTFORDELIVERY':
       return TransactionStatus.outForDelivery;
-    case "COMPLETED":
+    case 'COMPLETED':
       return TransactionStatus.completed;
-    case "CANCELLED":
+    case 'CANCELLED':
       return TransactionStatus.cancelled;
     default:
-      return TransactionStatus.pending;
+      throw ArgumentError('Unknown transaction status: $status');
   }
 }
 

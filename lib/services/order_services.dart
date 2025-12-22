@@ -9,6 +9,7 @@ import 'package:toko_telyu/models/order_item_model.dart';
 import 'package:toko_telyu/models/order_model.dart';
 import 'package:toko_telyu/repositories/order_repositories.dart';
 import 'package:toko_telyu/services/midtrans_services.dart';
+import 'package:toko_telyu/services/notification_services.dart';
 import 'package:toko_telyu/services/payment_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
 
@@ -141,6 +142,11 @@ class OrderService {
       amount: totalAmount.toInt(),
     );
 
+    await NotificationService.notifyAdminsNewOrder(
+      orderId: order.orderId,
+      customerName: customerName,
+    );
+
     return CheckoutResult(
       orderId: order.orderId,
       transactionToken: paymentData.transactionToken,
@@ -155,6 +161,12 @@ class OrderService {
     }
     order.orderStatus = next;
     await _orderRepo.updateOrder(order);
+
+    await NotificationService.notifyUserOrderStatus(
+      customerId: order.customerId,
+      orderId: order.orderId,
+      newStatus: next.name,
+    );
   }
 
   Future<void> updateShippingStatus(
