@@ -7,6 +7,8 @@ import 'package:toko_telyu/enums/role.dart';
 import 'package:toko_telyu/screens/admin/main_admin_screen.dart';
 import 'package:toko_telyu/screens/authentication.dart';
 import 'package:toko_telyu/screens/user/main_screen.dart';
+import 'package:toko_telyu/services/fcm_service.dart';
+import 'package:toko_telyu/services/notification_permission.dart';
 import 'package:toko_telyu/services/user_services.dart';
 import 'package:uuid/uuid.dart';
 
@@ -37,6 +39,9 @@ class AuthServices {
 
       await _secureStorage.write(key: 'session_token', value: token);
       await _secureStorage.write(key: 'user_id', value: user.userId);
+
+      await NotificationPermission.request();
+      await FcmService.setup(user.userId);
 
       if (user.role == RoleEnum.USER) {
         Navigator.pushAndRemoveUntil(
