@@ -41,4 +41,14 @@ class ProductCategoryRepository {
   Future<void> deleteCategory(String categoryId) async {
     await _categoryCollection.doc(categoryId).delete();
   }
+
+  Future<bool> isCategoryUsed(String categoryId) async {
+    final snapshot = await _firestore
+        .collection('product')
+        .where('category_id', isEqualTo: categoryId)
+        .limit(1)
+        .get();
+
+    return snapshot.docs.isNotEmpty;
+  }
 }
