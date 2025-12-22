@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -7,15 +9,14 @@ import 'package:toko_telyu/models/product_image.dart';
 import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/services/cloudinary_service.dart';
 import 'package:toko_telyu/services/product_services.dart';
+import 'package:toko_telyu/widgets/admin/product/custom_dropdown.dart';
+import 'package:toko_telyu/widgets/admin/product/form_field.dart';
+import 'package:toko_telyu/widgets/admin/product/image_list_section.dart';
+import 'package:toko_telyu/widgets/admin/product/list_section.dart';
+import 'package:toko_telyu/widgets/admin/product/image_modal.dart';
+import 'package:toko_telyu/widgets/admin/product/variant_modal.dart';
 import 'package:toko_telyu/widgets/admin/product/price_input_formatter.dart';
 import 'package:uuid/uuid.dart';
-
-import '../../widgets/admin/product/custom_dropdown.dart';
-import '../../widgets/admin/product/form_field.dart';
-import '../../widgets/admin/product/image_list_section.dart';
-import '../../widgets/admin/product/list_section.dart';
-import '../../widgets/admin/product/image_modal.dart';
-import '../../widgets/admin/product/variant_modal.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -29,122 +30,130 @@ class ProductFormScreen extends StatefulWidget {
 
 class _ProductFormScreenState extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final ProductService _productService = ProductService();
+  final ProductService _service = ProductService();
 
-  late final TextEditingController nameC;
-  late final TextEditingController priceC;
-  late final TextEditingController descC;
+  late final TextEditingController _nameC;
+  late final TextEditingController _priceC;
+  late final TextEditingController _descC;
 
-  List<ProductImage> images = [];
-  List<ProductVariant> variants = [];
-  ProductCategory? selectedCategory;
+  List<ProductImage> _images = [];
+  List<ProductVariant> _variants = [];
+  ProductCategory? _category;
 
-  double formattedPrice(String raw) {
-    final cleaned = raw.replaceAll(".", "");
-    return double.tryParse(cleaned) ?? 0;
+  bool _isSaving = false;
+
+  double _parsePrice(String raw) {
+    return double.tryParse(raw.replaceAll('.', '')) ?? 0;
   }
 
-  String toFormattedPrice(double num) {
-    final f = NumberFormat.decimalPattern("id_ID");
-    return f.format(num);
+  String _formatPrice(double value) {
+    return NumberFormat.decimalPattern('id_ID').format(value);
   }
+
+  double get _bottomSafePadding => MediaQuery.of(context).padding.bottom + 24;
 
   @override
   void initState() {
     super.initState();
-    nameC = TextEditingController(text: widget.product?.productName ?? "");
-    priceC = TextEditingController(
-      text: widget.product == null
-          ? ""
-          : toFormattedPrice(widget.product!.price),
+
+    _nameC = TextEditingController(text: widget.product?.productName ?? '');
+    _priceC = TextEditingController(
+      text: widget.product == null ? '' : _formatPrice(widget.product!.price),
     );
-    descC = TextEditingController(text: widget.product?.description ?? "");
-    selectedCategory =
+    _descC = TextEditingController(text: widget.product?.description ?? '');
+
+    _category =
         widget.product?.category ??
         (widget.categories.isNotEmpty ? widget.categories.first : null);
 
-    _loadProductData();
+    _loadExistingData();
   }
 
-  Future<void> _loadProductData() async {
+  Future<void> _loadExistingData() async {
     if (widget.product == null) return;
-    final id = widget.product!.productId;
-    final imgs = await _productService.getImages(id);
-    final vars = await _productService.getVariants(id);
 
+    final id = widget.product!.productId;
+
+    final imgs = await _service.getImages(id);
+    final vars = await _service.getVariants(id);
+
+    if (!mounted) return;
     setState(() {
-      images = imgs;
-      variants = vars;
+      _images = imgs;
+      _variants = vars;
     });
   }
 
-  void _addImage() {
+  void _openAddImage() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (_) => ProductImageModal(
-        onAdd: (imgUrl) =>
-            setState(() => images.add(ProductImage(Uuid().v4(), imgUrl))),
+        onAdd: (url) {
+          setState(() {
+            _images.add(ProductImage(const Uuid().v4(), url));
+          });
+        },
       ),
     );
   }
 
-  void _addVariant() {
+  void _openAddVariant() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) =>
-          ProductVariantModal(onAdd: (v) => setState(() => variants.add(v))),
+      builder: (_) => ProductVariantModal(
+        onAdd: (variant) {
+          setState(() => _variants.add(variant));
+        },
+      ),
     );
   }
 
-  Future<void> _saveProduct() async {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_category == null) return;
 
-    final navigator = Navigator.of(context);
-    final name = nameC.text;
-    final price = formattedPrice(priceC.text);
-    final desc = descC.text;
-    final category = selectedCategory!;
-    final id = widget.product?.productId ?? const Uuid().v4();
+    setState(() => _isSaving = true);
 
-    Product product;
+    try {
+      final name = _nameC.text.trim();
+      final price = _parsePrice(_priceC.text);
+      final desc = _descC.text.trim();
 
-    if (widget.product == null) {
-      product = await _productService.createProduct(
-        name,
-        price,
-        desc,
-        category,
-      );
-    } else {
-      product = widget.product!;
-      await _productService.updateProduct(id, {
-        "product_name": name,
-        "price": price,
-        "description": desc,
-        "category_id": category.categoryId,
-      });
-    }
+      Product product;
 
-    List<ProductImage> savedImages = [];
-    for (final img in images) {
-      String imageUrl = img.imageUrl;
-      if (img.file != null) {
-        imageUrl = await CloudinaryService.uploadImage(img.file!);
+      if (widget.product == null) {
+        product = await _service.createProduct(name, price, desc, _category!);
+      } else {
+        product = widget.product!;
+        await _service.updateProduct(product.productId, {
+          'product_name': name,
+          'price': price,
+          'description': desc,
+          'category_id': _category!.categoryId,
+        });
       }
-      final savedImage = await _productService.addImage(
-        product.productId,
-        imageUrl,
-      );
-      savedImages.add(savedImage);
+
+      final List<ProductImage> finalImages = [];
+
+      for (final img in _images) {
+        if (img.file != null) {
+          final url = await CloudinaryService.uploadImage(img.file as File);
+          finalImages.add(ProductImage(const Uuid().v4(), url));
+        } else {
+          finalImages.add(img);
+        }
+      }
+
+      await _service.syncImages(product.productId, finalImages);
+      await _service.syncVariants(product.productId, _variants);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
-
-    await _productService.syncImages(product.productId, savedImages);
-    await _productService.syncVariants(product.productId, variants);
-
-    if (!mounted) return;
-    navigator.pop();
   }
 
   @override
@@ -154,80 +163,96 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        centerTitle: true,
-        elevation: 0,
         backgroundColor: Colors.grey[100],
+        surfaceTintColor: Colors.grey[100],
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
         title: Text(
-          isEdit ? "Edit Product" : "Add New Product",
+          isEdit ? 'Edit Product' : 'Add Product',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ProductFormField(
-                controller: nameC,
-                label: "Product Name",
-                validator: (v) =>
-                    v!.isEmpty ? "Product name is required." : null,
-              ),
-              const SizedBox(height: 16),
-              ProductFormField(
-                controller: priceC,
-                label: "Price",
-                keyboard: TextInputType.number,
-                inputFormatters: [PriceInputFormatter()],
-                validator: (v) => v!.isEmpty ? "Price is required." : null,
-              ),
-              const SizedBox(height: 16),
-              ProductFormField(
-                controller: descC,
-                label: "Description",
-                maxLines: 4,
-              ),
-              const SizedBox(height: 24),
-              ProductCustomDropdown(
-                items: widget.categories,
-                selected: selectedCategory,
-                onChanged: (c) => setState(() => selectedCategory = c),
-              ),
-              const SizedBox(height: 24),
-              ProductImageListSection(
-                title: "Product Images",
-                items: images,
-                onDelete: (img) => setState(() => images.remove(img)),
-                onAdd: _addImage,
-              ),
-              const SizedBox(height: 16),
-              ProductListSection<ProductVariant>(
-                title: "Product Variant (color/size)",
-                items: variants,
-                onDelete: (v) => setState(() => variants.remove(v)),
-                onAdd: _addVariant,
-                addLabel: "Add Variant",
-                displayText: (v) =>
-                    "${v.optionName} - stock: ${v.stock} (+${v.additionalPrice})",
-              ),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFED1E28),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: _saveProduct,
-                  child: const Text(
-                    "Save Product",
-                    style: TextStyle(color: Colors.white),
+      body: SafeArea(
+        bottom: true,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, _bottomSafePadding),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ProductFormField(
+                  controller: _nameC,
+                  label: 'Product Name',
+                  validator: (v) => v!.isEmpty ? 'Product name required' : null,
+                ),
+                const SizedBox(height: 16),
+                ProductFormField(
+                  controller: _priceC,
+                  label: 'Price',
+                  keyboard: TextInputType.number,
+                  inputFormatters: [PriceInputFormatter()],
+                  validator: (v) => v!.isEmpty ? 'Price required' : null,
+                ),
+                const SizedBox(height: 16),
+                ProductFormField(
+                  controller: _descC,
+                  label: 'Description',
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 24),
+                ProductCustomDropdown(
+                  items: widget.categories,
+                  selected: _category,
+                  onChanged: (c) => setState(() => _category = c),
+                ),
+                const SizedBox(height: 24),
+                ProductImageListSection(
+                  title: 'Product Images',
+                  items: _images,
+                  onAdd: _openAddImage,
+                  onDelete: (img) => setState(() => _images.remove(img)),
+                ),
+                const SizedBox(height: 16),
+                ProductListSection<ProductVariant>(
+                  title: 'Product Variants',
+                  items: _variants,
+                  onAdd: _openAddVariant,
+                  onDelete: (v) => setState(() => _variants.remove(v)),
+                  addLabel: 'Add Variant',
+                  displayText: (v) =>
+                      '${v.optionName} | stock ${v.stock} (+${v.additionalPrice})',
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFED1E28),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Save Product',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

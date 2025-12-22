@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,7 +9,10 @@ import 'package:toko_telyu/models/user.dart';
 import 'package:toko_telyu/screens/admin/main_admin_screen.dart';
 import 'package:toko_telyu/screens/authentication.dart';
 import 'package:toko_telyu/screens/user/main_screen.dart';
+import 'package:toko_telyu/services/fcm_service.dart';
 import 'package:toko_telyu/services/firebase_options.dart';
+import 'package:toko_telyu/services/notification_permission.dart';
+import 'package:toko_telyu/services/notification_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
 import 'package:toko_telyu/widgets/connection_guard.dart';
 
@@ -16,6 +20,13 @@ final _secureStorage = FlutterSecureStorage();
 
 const _kSessionTokenKey = 'session_token';
 const _kUserIdKey = 'user_id';
+
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await NotificationService.showNotification(
+    title: message.notification?.title ?? 'Notification',
+    body: message.notification?.body ?? message.data['body'] ?? '',
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +38,8 @@ void main() async {
   ]);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  await NotificationPermission.request();
+  await NotificationService.initialize();
   runApp(const App());
 }
 
@@ -64,6 +76,8 @@ class _App extends State<App> {
       setState(() {
         _isLoggedIn = true;
       });
+
+      await FcmService.setup(user!.userId);
     } else {
       await _secureStorage.delete(key: _kSessionTokenKey);
       await _secureStorage.delete(key: _kUserIdKey);

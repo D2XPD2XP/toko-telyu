@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:toko_telyu/enums/payment_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
+import 'package:toko_telyu/screens/user/chatbot_screen.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
 
 class TransactionCard extends StatelessWidget {
@@ -44,17 +45,15 @@ class TransactionCard extends StatelessWidget {
       statusText = "Awaiting Payment";
       buttonText = "Pay Now";
       buttonAction = onPayNow;
+    } else if (paymentStatus == PaymentStatus.failed) {
+      statusColor = const Color(0xFFD32F2F);
+      statusText = "Cancelled";
+      buttonText = "";
+      buttonAction = null;
     } else {
       switch (status) {
         case TransactionStatus.pending:
           statusColor = const Color(0xFF3F51B5);
-          statusText = "Order Received";
-          buttonText = "View Details";
-          buttonAction = null;
-          break;
-
-        case TransactionStatus.preparingForDelivery:
-          statusColor = const Color(0xFF5E35B1);
           statusText = "Preparing Order";
           buttonText = "View Details";
           buttonAction = null;
@@ -70,8 +69,8 @@ class TransactionCard extends StatelessWidget {
         case TransactionStatus.outForDelivery:
           statusColor = const Color(0xFFFF9800);
           statusText = "Out for Delivery";
-          buttonText = "Track Order";
-          buttonAction = onTrackOrder;
+          buttonText = "";
+          buttonAction = null;
           break;
 
         case TransactionStatus.completed:
@@ -162,13 +161,18 @@ class TransactionCard extends StatelessWidget {
                       color: Colors.white,
                       onSelected: (value) {
                         if (value == 'support') {
-                          // Navigate to support page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ChatbotScreen(),
+                            ),
+                          );
                         }
                       },
                       itemBuilder: (_) => const [
                         PopupMenuItem(
                           value: 'support',
-                          child: Text('Customer Support'),
+                          child: Text('Chat with AI Support'),
                         ),
                       ],
                       icon: Icon(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'package:toko_telyu/enums/payment_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
@@ -10,7 +11,7 @@ import 'package:toko_telyu/models/payment_model.dart';
 
 import 'package:toko_telyu/screens/user/chatbot_screen.dart';
 import 'package:toko_telyu/screens/user/payment_screen.dart';
-import 'package:toko_telyu/screens/user/track_order_screen.dart';
+import 'package:toko_telyu/screens/user/product_details_screen.dart';
 
 import 'package:toko_telyu/services/order_services.dart';
 import 'package:toko_telyu/services/payment_services.dart';
@@ -38,14 +39,49 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final Map<String, Map<String, String>> products = {};
 
   bool loading = true;
-  bool get isPaymentPending => order?.paymentStatus == PaymentStatus.pending;
-  bool get isPaymentCompleted =>
-      order?.paymentStatus == PaymentStatus.completed;
-  bool get canTrack => order?.orderStatus == TransactionStatus.outForDelivery;
+  bool error = false;
   bool _showAllProducts = false;
 
   static const _primaryRed = Color(0xFFED1E28);
   static const _bgGrey = Color(0xFFF2F2F2);
+
+  bool get isPaymentPending => order?.paymentStatus == PaymentStatus.pending;
+
+  bool get isCompleted => order?.orderStatus == TransactionStatus.completed;
+
+  bool get canTrack => order?.orderStatus == TransactionStatus.outForDelivery;
+
+  bool get showBottomCTA => isPaymentPending || isCompleted;
+
+  String getOrderStatusText({
+    required PaymentStatus paymentStatus,
+    required TransactionStatus status,
+  }) {
+    if (paymentStatus == PaymentStatus.pending) {
+      return 'Awaiting Payment';
+    }
+
+    if (paymentStatus == PaymentStatus.failed) {
+      return 'Cancelled';
+    }
+
+    switch (status) {
+      case TransactionStatus.pending:
+        return 'Preparing Order';
+
+      case TransactionStatus.readyForPickup:
+        return 'Ready for Pickup';
+
+      case TransactionStatus.outForDelivery:
+        return 'Out for Delivery';
+
+      case TransactionStatus.completed:
+        return 'Completed';
+
+      case TransactionStatus.cancelled:
+        return 'Cancelled';
+    }
+  }
 
   @override
   void initState() {
@@ -66,49 +102,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         final imgs = await _productService.getImages(i.productId);
         products[i.productId] = {
           'name': p.productName,
+          'price': p.price.toString(),
           'image': imgs.isNotEmpty
               ? imgs.first.imageUrl
               : 'assets/placeholder.png',
-          'price': p.price.toString(),
         };
       }
+    } catch (_) {
+      error = true;
     } finally {
       if (mounted) setState(() => loading = false);
     }
-  }
-
-  String get _bottomText {
-    if (isPaymentPending) return 'Check Payment Status';
-    if (canTrack) return 'Track Order';
-    if (isCompleted) return 'Reorder';
-    return '';
-  }
-
-  VoidCallback? get _bottomAction {
-    if (isPaymentPending) {
-      return () async {
-        final updated = await _orderService.getOrderById(order!.orderId);
-        if (!mounted) return;
-        setState(() => order = updated);
-      };
-    }
-
-    if (canTrack) {
-      return () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => TrackOrderScreen(orderId: order!.orderId),
-          ),
-        );
-      };
-    }
-
-    if (isCompleted) {
-      return () {};
-    }
-
-    return null;
   }
 
   List<OrderItem> get _visibleItems {
@@ -116,25 +120,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return items.take(2).toList();
   }
 
-  bool get _canShowMore => items.length > 2;
-
-  bool get isPending => order?.paymentStatus == PaymentStatus.pending;
-  bool get isCompleted => order?.orderStatus == TransactionStatus.completed;
-
   double get subtotal => items.fold(0, (s, i) => s + i.subtotal);
-  double get total => subtotal + order!.shippingCost + 1000;
+
+  double get total => subtotal + (order?.shippingCost ?? 0) + 1000;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgGrey,
       appBar: _appBar(),
-      body: loading ? _skeleton() : _content(),
-      bottomNavigationBar: _bottomCTA(),
+      body: loading
+          ? const Center(child: CircularProgressIndicator(color: _primaryRed))
+          : error
+          ? _errorState()
+          : _content(),
+      bottomNavigationBar: showBottomCTA ? _bottomCTA() : null,
     );
   }
-
-  // ===================== APP BAR =====================
 
   AppBar _appBar() => AppBar(
     backgroundColor: Colors.white,
@@ -159,21 +161,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     ],
   );
 
-  // ===================== CONTENT =====================
-
-  Widget _content() {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 100),
-      children: [
-        _orderStatus(),
-        _productDetails(),
-        _paymentDetails(),
-        _helpSection(),
-      ],
-    );
-  }
-
-  // ===================== SECTIONS =====================
+  Widget _content() => ListView(
+    padding: const EdgeInsets.only(bottom: 80),
+    children: [
+      _orderStatus(),
+      _productDetails(),
+      _paymentDetails(),
+      _helpSection(),
+    ],
+  );
 
   Widget _orderStatus() => _card(
     Column(
@@ -181,25 +177,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       children: [
         Row(
           children: [
-            Container(width: 4, height: 22, color: _primaryRed),
+            Container(width: 4, height: 20, color: _primaryRed),
             const SizedBox(width: 8),
             Text(
-              isPaymentPending
-                  ? 'Payment Pending'
-                  : isCompleted
-                  ? 'Order Completed'
-                  : 'Order Processing',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+              getOrderStatusText(
+                paymentStatus: order!.paymentStatus,
+                status: order!.orderStatus,
               ),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
           ],
         ),
-        const Divider(height: 24),
+        const Divider(height: 20),
+        _row('Order Code', order!.orderId),
         _row(
           'Purchase Date',
-          '${order!.orderDate.day} November 2025, 12:46 WIB',
+          DateFormat('dd MMMM yyyy').format(order!.orderDate),
         ),
       ],
     ),
@@ -210,47 +203,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionTitle('Product Details'),
-        const SizedBox(height: 12),
-
+        const SizedBox(height: 8),
         ..._visibleItems.map(_productRow),
-
-        if (_canShowMore)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: () =>
-                  setState(() => _showAllProducts = !_showAllProducts),
-              child: Text(
-                _showAllProducts ? 'Show less' : 'Show more',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: _primaryRed,
-                ),
-              ),
+        if (items.length > 2)
+          TextButton(
+            onPressed: () =>
+                setState(() => _showAllProducts = !_showAllProducts),
+            child: Text(
+              _showAllProducts ? 'Show less' : 'Show more',
+              style: const TextStyle(color: _primaryRed),
             ),
           ),
-
-        Align(
-          alignment: Alignment.centerRight,
-          child: _smallButton(
-            isPaymentPending ? 'Pay Now' : 'Reorder',
-            onTap: isPaymentPending && payment != null
-                ? () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PaymentScreen(
-                          orderId: order!.orderId,
-                          transactionToken: payment!.midtransTransactionId,
-                          redirectUrl: payment!.paymentUrl ?? '',
-                        ),
-                      ),
-                    );
-                  }
-                : null,
-          ),
-        ),
       ],
     ),
   );
@@ -261,10 +224,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       children: [
         _sectionTitle('Payment Details'),
         const SizedBox(height: 8),
-        _row('Payment Method', order!.paymentStatus.name.toUpperCase()),
+        _row('Payment Status', order!.paymentStatus.name.toUpperCase()),
         const Divider(),
         _priceRow('Item Subtotal', subtotal),
-        _priceRow('Total Shipping Cost', order!.shippingCost),
+        _priceRow('Shipping', order!.shippingCost),
         _priceRow('Service Fee', 1000),
         const Divider(),
         _priceRow('Order Total', total, bold: true),
@@ -273,39 +236,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   );
 
   Widget _helpSection() => _card(
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('Help'),
-        const SizedBox(height: 12),
-
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChatbotScreen()),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.headset_mic, size: 22),
-              const SizedBox(width: 12),
-
-              const Text(
-                'TOKTEL AI',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-
-              const Spacer(),
-
-              Icon(Icons.chevron_right, color: Colors.grey.shade400),
-            ],
-          ),
-        ),
-      ],
+    InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+      ),
+      child: Row(
+        children: const [
+          Icon(Icons.headset_mic),
+          SizedBox(width: 12),
+          Text('TOKTEL AI', style: TextStyle(fontWeight: FontWeight.w600)),
+          Spacer(),
+          Icon(Icons.chevron_right),
+        ],
+      ),
     ),
   );
-
-  // ===================== BOTTOM CTA =====================
 
   Widget _bottomCTA() => SafeArea(
     child: Padding(
@@ -317,44 +263,71 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 0,
         ),
         child: Text(
-          _bottomText,
-          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+          isPaymentPending ? 'Pay Now' : 'Reorder',
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     ),
   );
 
-  // ===================== SMALL WIDGETS =====================
+  VoidCallback? get _bottomAction {
+    if (isPaymentPending && payment != null) {
+      return () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentScreen(
+              orderId: order!.orderId,
+              transactionToken: payment!.midtransTransactionId,
+              redirectUrl: payment!.paymentUrl ?? '',
+            ),
+          ),
+        );
+      };
+    }
+
+    if (isCompleted && items.isNotEmpty) {
+      return () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                ProductDetailsScreen(productId: items.first.productId),
+          ),
+        );
+      };
+    }
+    return null;
+  }
 
   Widget _productRow(OrderItem item) {
     final p = products[item.productId]!;
-
     final price = double.parse(p['price']!);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          ProductImageView(imageUrl: p['image']!, size: 64),
-          const SizedBox(width: 12),
+          ProductImageView(imageUrl: p['image']!, size: 56),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   p['name']!,
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 4),
                 Row(
                   children: [
                     Text('${item.amount} x '),
                     FormattedPrice(
                       price: price,
                       size: 12,
-                      fontWeight: FontWeight.normal,
+                      fontWeight: FontWeight.w400,
                     ),
                   ],
                 ),
@@ -366,12 +339,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Widget _row(String l, String v) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(l, style: const TextStyle(color: Colors.grey)),
-      Text(v),
-    ],
+  Widget _row(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(label, style: const TextStyle(color: Colors.grey)),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          textAlign: TextAlign.right,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+      ],
+    ),
   );
 
   Widget _priceRow(String l, double v, {bool bold = false}) => Row(
@@ -388,30 +371,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Widget _sectionTitle(String t) => Text(
     t,
-    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
-  );
-
-  Widget _smallButton(String t, {VoidCallback? onTap}) => ElevatedButton(
-    onPressed: onTap,
-    style: ElevatedButton.styleFrom(
-      backgroundColor: _primaryRed,
-      foregroundColor: Colors.white,
-      minimumSize: const Size(110, 32),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      elevation: 0,
-    ),
-    child: Text(
-      t,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-    ),
+    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
   );
 
   Widget _card(Widget c) => Container(
-    margin: const EdgeInsets.only(bottom: 8),
     padding: const EdgeInsets.all(16),
+    margin: const EdgeInsets.only(bottom: 8),
     color: Colors.white,
     child: c,
   );
 
-  Widget _skeleton() => const Center(child: CircularProgressIndicator());
+  Widget _errorState() => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('Failed to load order'),
+        const SizedBox(height: 12),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              loading = true;
+              error = false;
+            });
+            _load();
+          },
+          child: const Text('Retry'),
+        ),
+      ],
+    ),
+  );
 }

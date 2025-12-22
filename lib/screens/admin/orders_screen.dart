@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toko_telyu/enums/payment_status.dart';
 import 'package:toko_telyu/enums/transaction_status.dart';
 import 'package:toko_telyu/models/order_model.dart';
@@ -12,7 +15,6 @@ enum OrderFilter {
   all,
   waitingPayment,
   pending,
-  preparingForDelivery,
   readyForPickup,
   outForDelivery,
   completed,
@@ -30,73 +32,155 @@ class _OrdersScreenState extends State<OrdersScreen> {
   final _orderService = OrderService();
   final _userService = UserService();
   final _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  Timer? _debounce;
 
   final Color primaryColor = const Color(0xFFED1E28);
-
   final Map<String, String> _customerCache = {};
-  List<OrderModel> _orders = [];
 
+  List<OrderModel> _orders = [];
   bool _loading = true;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDoc;
+  final int _limit = 10;
   OrderFilter _filter = OrderFilter.pending;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadOrdersPage(reset: true);
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
-
-    final orders = await _orderService.getAllOrders();
-    _orders = orders;
-
-    for (final o in orders) {
-      if (_customerCache.containsKey(o.customerId)) continue;
-      final user = await _userService.getUser(o.customerId);
-      _customerCache[o.customerId] = user?.name ?? 'Unknown User';
+  Future<void> _loadOrdersPage({bool reset = false}) async {
+    if (reset) {
+      _orders = [];
+      _lastDoc = null;
+      _hasMore = true;
+      _loading = true;
+      _errorMessage = null;
     }
 
-    setState(() => _loading = false);
+    if (!_hasMore || _loadingMore) return;
+
+    _loadingMore = true;
+
+    try {
+      List<String>? statusList;
+      bool filterProcessing = false;
+      bool filterWaitingPayment = false;
+
+      switch (_filter) {
+        case OrderFilter.waitingPayment:
+          filterWaitingPayment = true;
+          break;
+        case OrderFilter.pending:
+          statusList = ['PENDING'];
+          filterProcessing = true;
+          break;
+        case OrderFilter.readyForPickup:
+          statusList = ['READYFORPICKUP'];
+          break;
+        case OrderFilter.outForDelivery:
+          statusList = ['OUTFORDELIVERY'];
+          break;
+        case OrderFilter.completed:
+          statusList = ['COMPLETED'];
+          break;
+        case OrderFilter.cancelled:
+          statusList = ['CANCELLED'];
+          break;
+        case OrderFilter.all:
+          statusList = null;
+          break;
+      }
+
+      final result = await _orderService.getOrdersPage(
+        limit: _limit,
+        startAfter: _lastDoc,
+        statusList: statusList,
+      );
+
+      final orders = result.orders.where((o) {
+        if (filterProcessing) {
+          return o.orderStatus == TransactionStatus.pending &&
+              o.paymentStatus == PaymentStatus.completed;
+        }
+        if (filterWaitingPayment) {
+          return o.paymentStatus == PaymentStatus.pending;
+        }
+        return true;
+      }).toList();
+
+      for (final o in orders) {
+        if (!_customerCache.containsKey(o.customerId)) {
+          try {
+            final user = await _userService.getUser(o.customerId);
+            _customerCache[o.customerId] = user?.name ?? 'Unknown User';
+          } catch (_) {
+            _customerCache[o.customerId] = 'Unknown User';
+          }
+        }
+      }
+
+      _orders.addAll(orders);
+      _lastDoc = result.lastDoc;
+      _hasMore = result.orders.length == _limit;
+    } catch (e, s) {
+      debugPrint('Error loading orders page: $e');
+      debugPrintStack(stackTrace: s);
+      _errorMessage = 'Failed to load orders. Please try again.';
+    } finally {
+      setState(() {
+        _loading = false;
+        _loadingMore = false;
+      });
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadOrdersPage();
+    }
   }
 
   List<OrderModel> get _filtered {
     final q = _searchController.text.toLowerCase();
-
     return _orders.where((o) {
       final matchSearch =
           o.orderId.toLowerCase().contains(q) ||
           (_customerCache[o.customerId] ?? '').toLowerCase().contains(q);
-
       if (!matchSearch) return false;
 
       switch (_filter) {
         case OrderFilter.waitingPayment:
           return o.paymentStatus == PaymentStatus.pending;
-
         case OrderFilter.pending:
-          return o.paymentStatus == PaymentStatus.completed &&
-              o.orderStatus == TransactionStatus.pending;
-
-        case OrderFilter.preparingForDelivery:
-          return o.orderStatus == TransactionStatus.preparingForDelivery;
-
+          return o.orderStatus == TransactionStatus.pending &&
+              o.paymentStatus == PaymentStatus.completed;
         case OrderFilter.readyForPickup:
           return o.orderStatus == TransactionStatus.readyForPickup;
-
         case OrderFilter.outForDelivery:
           return o.orderStatus == TransactionStatus.outForDelivery;
-
         case OrderFilter.completed:
           return o.orderStatus == TransactionStatus.completed;
-
         case OrderFilter.cancelled:
           return o.orderStatus == TransactionStatus.cancelled;
-
         case OrderFilter.all:
           return true;
       }
     }).toList();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -119,7 +203,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
           children: [
             TextField(
               controller: _searchController,
-              onChanged: (_) => setState(() {}),
+              onChanged: (text) {
+                if (_debounce?.isActive ?? false) _debounce!.cancel();
+                _debounce = Timer(const Duration(milliseconds: 300), () {
+                  setState(() {});
+                });
+              },
               decoration: InputDecoration(
                 hintText: "Search order / customer",
                 prefixIcon: const Icon(Icons.search),
@@ -134,14 +223,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
             const SizedBox(height: 12),
             OrderFilterWidget(
               initial: _filter,
-              onChanged: (f) => setState(() => _filter = f),
+              onChanged: (f) {
+                setState(() => _filter = f);
+                _loadOrdersPage(reset: true);
+              },
             ),
             const SizedBox(height: 12),
             Expanded(
               child: RefreshIndicator(
                 color: primaryColor,
-                onRefresh: _load,
-                child: _loading
+                onRefresh: () => _loadOrdersPage(reset: true),
+                child: _loading && _orders.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: const [
@@ -153,33 +245,62 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ],
                       )
+                    : _errorMessage != null
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(height: 200),
+                          Center(
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      )
                     : ListView.builder(
+                        controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.only(
                           bottom: MediaQuery.of(context).padding.bottom + 48,
                         ),
-                        itemCount: _filtered.length,
+                        itemCount: _filtered.length + (_hasMore ? 1 : 0),
                         itemBuilder: (_, i) {
+                          if (i >= _filtered.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFED1E28),
+                                ),
+                              ),
+                            );
+                          }
                           final order = _filtered[i];
+                          final customerName =
+                              _customerCache[order.customerId] ??
+                              order.customerId;
                           return OrderCard(
                             order: order,
-                            customerName:
-                                _customerCache[order.customerId] ??
-                                order.customerId,
+                            customerName: customerName,
                             primaryColor: primaryColor,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    AdminOrderDetailScreen(order: order),
+                                builder: (_) => AdminOrderDetailScreen(
+                                  order: order,
+                                  orderId: order.orderId,
+                                ),
                               ),
                             ),
                             onUpdateStatus: (nextStatus) async {
-                              await _orderService.updateOrderStatus(
-                                order.orderId,
-                                nextStatus,
-                              );
-                              await _load();
+                              try {
+                                await _orderService.updateOrderStatus(
+                                  order.orderId,
+                                  nextStatus,
+                                );
+                                _loadOrdersPage(reset: true);
+                              } catch (_) {}
                             },
                           );
                         },

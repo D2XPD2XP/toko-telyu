@@ -4,7 +4,7 @@ PaymentStatus parsePaymentStatus(String? value) {
   switch (value) {
     case "completed":
       return PaymentStatus.completed;
-    case "failure":
+    case "failed":
       return PaymentStatus.failed;
     case "pending":
     default:

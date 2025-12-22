@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:toko_telyu/enums/payment_status.dart';
 import 'package:toko_telyu/enums/role.dart';
@@ -9,6 +9,7 @@ import 'package:toko_telyu/models/order_item_model.dart';
 import 'package:toko_telyu/models/order_model.dart';
 import 'package:toko_telyu/repositories/order_repositories.dart';
 import 'package:toko_telyu/services/midtrans_services.dart';
+import 'package:toko_telyu/services/notification_services.dart';
 import 'package:toko_telyu/services/payment_services.dart';
 import 'package:toko_telyu/services/user_services.dart';
 
@@ -28,38 +29,40 @@ class _MidtransResult {
   final String transactionToken;
   final String redirectUrl;
 
-  _MidtransResult({required this.transactionToken, required this.redirectUrl});
+  const _MidtransResult({
+    required this.transactionToken,
+    required this.redirectUrl,
+  });
 }
 
 class OrderService {
   final OrderRepository _orderRepo;
   final PaymentService _paymentService;
   final MidtransService _midtransService;
-  UserService userService = UserService();
-  final storage = FlutterSecureStorage();
+  final UserService _userService;
 
   OrderService({
     OrderRepository? orderRepository,
     PaymentService? paymentService,
     MidtransService? midtransService,
+    UserService? userService,
+    FlutterSecureStorage? storage,
   }) : _orderRepo = orderRepository ?? OrderRepository(),
        _paymentService = paymentService ?? PaymentService(),
-       _midtransService = MidtransService(
-         baseUrl: "https://toko-telyu-service.vercel.app",
-       );
-  //  midtransService ?? MidtransService(baseUrl: "http://10.0.2.2:8000");
+       _midtransService =
+           midtransService ??
+           MidtransService(baseUrl: "https://toko-telyu-service.vercel.app"),
+       _userService = userService ?? UserService();
 
+  // Fetch / Read
   Future<OrderModel> getOrderById(String orderId) async {
     final order = await _orderRepo.getOrderById(orderId);
-    if (order == null) {
-      throw Exception("Order not found");
-    }
+    if (order == null) throw Exception('Order not found');
     return order;
   }
 
-  Future<List<OrderItem>> getOrderItems(String orderId) {
-    return _orderRepo.getOrderItems(orderId);
-  }
+  Future<List<OrderItem>> getOrderItems(String orderId) =>
+      _orderRepo.getOrderItems(orderId);
 
   Future<Map<String, dynamic>> getOrderWithItems(String orderId) async {
     final order = await getOrderById(orderId);
@@ -68,26 +71,39 @@ class OrderService {
   }
 
   Future<List<OrderModel>> getAllOrders() async {
-    try {
-      final user = await userService.loadUser();
+    final user = await _userService.loadUser();
+    if (user == null) throw Exception('User not found');
 
-      if (user == null) {
-        throw Exception('User not found. Please login again.');
-      }
-
-      if (user.role == RoleEnum.ADMIN) {
-        return await _orderRepo.getAllOrders();
-      } else {
-        return await _orderRepo.getOrdersByUserId(user.userId);
-      }
-    } catch (e, stackTrace) {
-      // Cetak error dengan benar
-      debugPrint('Error getAllOrders: $e');
-      debugPrintStack(stackTrace: stackTrace);
-      return [];
-    }
+    return user.role == RoleEnum.ADMIN
+        ? _orderRepo.getAllOrders()
+        : _orderRepo.getOrdersByUserId(user.userId);
   }
 
+  Future<OrderPageResult> getOrdersPage({
+    required int limit,
+    DocumentSnapshot? startAfter,
+    List<String>? statusList,
+  }) async {
+    final user = await _userService.loadUser();
+    if (user == null) throw Exception('User not logged in');
+
+    if (user.role == RoleEnum.ADMIN) {
+      return _orderRepo.getOrdersPage(
+        limit: limit,
+        startAfter: startAfter,
+        statusList: statusList,
+      );
+    }
+
+    return _orderRepo.getOrdersPage(
+      limit: limit,
+      startAfter: startAfter,
+      userId: user.userId,
+      statusList: statusList,
+    );
+  }
+
+  // Actions / Mutations
   Future<CheckoutResult> checkout({
     required String customerId,
     required List<OrderItem> items,
@@ -107,8 +123,10 @@ class OrderService {
       deliveryAreaId: shippingAddress['delivery_area_id'],
     );
 
-    await _orderRepo.createOrder(order);
-    await _addOrderItems(order.orderId, items);
+    await _orderRepo.createOrderWithItemsAndReduceStock(
+      order: order,
+      items: items,
+    );
 
     final paymentData = await _createMidtransTransaction(
       orderId: order.orderId,
@@ -124,6 +142,11 @@ class OrderService {
       amount: totalAmount.toInt(),
     );
 
+    await NotificationService.notifyAdminsNewOrder(
+      orderId: order.orderId,
+      customerName: customerName,
+    );
+
     return CheckoutResult(
       orderId: order.orderId,
       transactionToken: paymentData.transactionToken,
@@ -133,13 +156,17 @@ class OrderService {
 
   Future<void> updateOrderStatus(String orderId, TransactionStatus next) async {
     final order = await getOrderById(orderId);
-
     if (order.paymentStatus != PaymentStatus.completed) {
-      throw Exception('Cannot update status before payment completed');
+      throw Exception('Cannot update status before payment is completed');
     }
-
     order.orderStatus = next;
     await _orderRepo.updateOrder(order);
+
+    await NotificationService.notifyUserOrderStatus(
+      customerId: order.customerId,
+      orderId: order.orderId,
+      newStatus: next.name,
+    );
   }
 
   Future<void> updateShippingStatus(
@@ -154,14 +181,30 @@ class OrderService {
 
   Future<void> deleteOrderCompletely(String orderId) async {
     final items = await getOrderItems(orderId);
-
     for (final item in items) {
       await _orderRepo.deleteOrderItem(orderId, item.orderItemId);
     }
-
     await _orderRepo.deleteOrder(orderId);
   }
 
+  // Helpers
+  TransactionStatus? getNextStatus(OrderModel order) {
+    if (order.paymentStatus != PaymentStatus.completed) return null;
+
+    switch (order.orderStatus) {
+      case TransactionStatus.pending:
+        return order.shippingMethod == ShippingMethod.delivery
+            ? TransactionStatus.outForDelivery
+            : TransactionStatus.readyForPickup;
+      case TransactionStatus.readyForPickup:
+      case TransactionStatus.outForDelivery:
+        return TransactionStatus.completed;
+      default:
+        return null;
+    }
+  }
+
+  // Private builders / utils
   OrderModel _buildOrder({
     required String customerId,
     required double totalAmount,
@@ -169,28 +212,20 @@ class OrderService {
     required Map<String, dynamic> shippingAddress,
     required double shippingCost,
     String? deliveryAreaId,
-  }) {
-    return OrderModel(
-      orderId: _generateOrderId(),
-      customerId: customerId,
-      orderStatus: TransactionStatus.pending,
-      paymentStatus: PaymentStatus.pending,
-      shippingMethod: shippingMethod,
-      shippingStatus: null,
-      shippingAddress: shippingAddress,
-      deliveryAreaId: deliveryAreaId,
-      orderDate: DateTime.now(),
-      shippingDate: null,
-      totalAmount: totalAmount,
-      shippingCost: shippingCost,
-    );
-  }
-
-  Future<void> _addOrderItems(String orderId, List<OrderItem> items) async {
-    for (final item in items) {
-      await _orderRepo.addOrderItem(orderId, item);
-    }
-  }
+  }) => OrderModel(
+    orderId: _generateOrderId(),
+    customerId: customerId,
+    orderStatus: TransactionStatus.pending,
+    paymentStatus: PaymentStatus.pending,
+    shippingMethod: shippingMethod,
+    shippingStatus: null,
+    shippingAddress: shippingAddress,
+    deliveryAreaId: deliveryAreaId,
+    orderDate: DateTime.now(),
+    shippingDate: null,
+    totalAmount: totalAmount,
+    shippingCost: shippingCost,
+  );
 
   Future<_MidtransResult> _createMidtransTransaction({
     required String orderId,
@@ -218,25 +253,4 @@ class OrderService {
   }
 
   String _generateOrderId() => "ORDER-${DateTime.now().millisecondsSinceEpoch}";
-
-  TransactionStatus? getNextStatus(OrderModel order) {
-    if (order.paymentStatus != PaymentStatus.completed) return null;
-
-    switch (order.orderStatus) {
-      case TransactionStatus.pending:
-        return order.shippingMethod == ShippingMethod.delivery
-            ? TransactionStatus.preparingForDelivery
-            : TransactionStatus.readyForPickup;
-
-      case TransactionStatus.preparingForDelivery:
-        return TransactionStatus.outForDelivery;
-
-      case TransactionStatus.readyForPickup:
-      case TransactionStatus.outForDelivery:
-        return TransactionStatus.completed;
-
-      default:
-        return null;
-    }
-  }
 }
