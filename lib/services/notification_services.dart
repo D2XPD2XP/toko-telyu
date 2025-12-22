@@ -16,7 +16,7 @@ class NotificationService {
         importance: NotificationImportance.Max,
         defaultColor: const Color(0xFFED1E28),
         ledColor: const Color(0xFFFFFFFF),
-        // icon: 'resource://drawable/notif_icon',
+        icon: 'resource://drawable/notif_icon',
       ),
     ], debug: true);
 
@@ -40,8 +40,8 @@ class NotificationService {
           title: title,
           body: body,
           notificationLayout: NotificationLayout.Default,
-          largeIcon: 'resource://drawable/ic_notif',
-          icon: 'resource://drawable/ic_notif',
+          largeIcon: 'resource://drawable/notif_icon',
+          icon: 'resource://drawable/notif_icon',
         ),
       );
     } catch (e, s) {
