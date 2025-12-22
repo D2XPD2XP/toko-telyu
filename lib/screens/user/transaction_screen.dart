@@ -205,7 +205,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   String _statusText(TransactionStatus status) {
     switch (status) {
       case TransactionStatus.pending:
-        return "Order Received";
+        return "Wait / Process";
       case TransactionStatus.readyForPickup:
         return "Ready for Pickup";
       case TransactionStatus.outForDelivery:

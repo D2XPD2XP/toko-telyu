@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toko_telyu/models/product.dart';
+import 'package:toko_telyu/models/product_category.dart';
+import 'package:toko_telyu/models/product_image.dart';
+import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/screens/admin/product_form_screen.dart';
 import 'package:toko_telyu/services/product_category_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
-import 'package:toko_telyu/models/product_image.dart';
-import 'package:toko_telyu/models/product_variant.dart';
-import 'package:toko_telyu/models/product_category.dart';
 import 'package:toko_telyu/widgets/product_image.dart';
 
 class ProductScreen extends StatefulWidget {
@@ -21,21 +21,17 @@ class _ProductScreenState extends State<ProductScreen> {
   final ProductService _service = ProductService();
   final ProductCategoryService _categoryService = ProductCategoryService();
 
-  double get bottomPadding => MediaQuery.of(context).padding.bottom + 50;
-
   List<Product> _products = [];
   List<ProductCategory> _categories = [];
 
-  /// Penyimpanan sementara images & variants
   final Map<String, List<ProductImage>> _productImages = {};
   final Map<String, List<ProductVariant>> _productVariants = {};
 
   bool _isLoading = true;
   String searchQuery = "";
 
-  // -------------------------------
-  // LOAD DATA AWAL
-  // -------------------------------
+  double get bottomPadding => MediaQuery.of(context).padding.bottom + 50;
+
   @override
   void initState() {
     super.initState();
@@ -43,53 +39,107 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<void> _loadAll() async {
+    if (!mounted) return;
+
     try {
       setState(() => _isLoading = true);
 
       _categories = await _categoryService.getCategories();
       final products = await _service.getAllProducts(_categories);
 
-      for (var p in products) {
+      for (final p in products) {
         _productImages[p.productId] = await _service.getImages(p.productId);
         _productVariants[p.productId] = await _service.getVariants(p.productId);
       }
 
-      setState(() {
-        _products = products;
-      });
+      if (!mounted) return;
+      setState(() => _products = products);
     } catch (e) {
       if (kDebugMode) {
         print("ERROR loadAll => $e");
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  // -------------------------------
-  // SEARCH
-  // -------------------------------
   Future<void> _search(String q) async {
     searchQuery = q;
 
     if (q.trim().isEmpty) {
-      return _loadAll();
+      await _loadAll();
+      return;
     }
 
     final results = await _service.searchProducts(q, _categories);
 
-    // load images & variants
-    for (var p in results) {
+    for (final p in results) {
       _productImages[p.productId] = await _service.getImages(p.productId);
       _productVariants[p.productId] = await _service.getVariants(p.productId);
     }
 
+    if (!mounted) return;
     setState(() => _products = results);
   }
 
-  // -------------------------------
-  // IMAGE LOADER
-  // -------------------------------
+  Future<bool> _confirmDelete() async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                'Delete Product',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+              content: const Text(
+                'This product will be permanently deleted.',
+                style: TextStyle(color: Colors.black87),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
   Widget _buildImage(String? path) {
     return ProductImageView(
       imageUrl: path,
@@ -98,9 +148,6 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  // -------------------------------
-  // SEARCH FIELD
-  // -------------------------------
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
@@ -109,7 +156,7 @@ class _ProductScreenState extends State<ProductScreen> {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: TextField(
-        onChanged: (value) => _search(value),
+        onChanged: _search,
         decoration: const InputDecoration(
           hintText: "Search product...",
           prefixIcon: Icon(Icons.search),
@@ -119,12 +166,9 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  // -------------------------------
-  // ADD BUTTON
-  // -------------------------------
   Widget _buildAddButton() {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
@@ -138,16 +182,9 @@ class _ProductScreenState extends State<ProductScreen> {
         },
         child: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFED1E28),
+          decoration: const BoxDecoration(
+            color: Color(0xFFED1E28),
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
           ),
           child: const Icon(Icons.add, color: Colors.white),
         ),
@@ -155,15 +192,12 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  // -------------------------------
-  // PRODUCT ITEM (UI unchanged)
-  // -------------------------------
   Widget _buildProductItem(Product item) {
     final images = _productImages[item.productId] ?? [];
     final variants = _productVariants[item.productId] ?? [];
 
     final imageUrl = images.isNotEmpty ? images.first.imageUrl : null;
-    final totalStock = variants.fold<int>(0, (sum, v) => sum + v.stock);
+    final totalStock = variants.fold<int>(0, (s, v) => s + v.stock);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -172,42 +206,27 @@ class _ProductScreenState extends State<ProductScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .03),
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // IMAGE
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: _buildImage(imageUrl),
-          ),
-
+          _buildImage(imageUrl),
           const SizedBox(width: 14),
-
-          // CONTENT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // NAME + STOCK
                 Row(
                   children: [
                     Expanded(
                       child: Text(
                         item.productName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
@@ -219,59 +238,26 @@ class _ProductScreenState extends State<ProductScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 4),
-
-                // PRICE
                 FormattedPrice(
                   price: item.price,
-                  size: 14.0,
+                  size: 14,
                   fontWeight: FontWeight.w600,
                 ),
-
                 const SizedBox(height: 8),
-
-                // IMAGE + VARIANT COUNT
                 Wrap(
                   spacing: 16,
-                  runSpacing: 4,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.image, size: 16, color: Colors.grey),
-                        SizedBox(width: 4),
-                        Text(
-                          "${images.length} Image",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.layers, size: 16, color: Colors.grey),
-                        SizedBox(width: 4),
-                        Text(
-                          "${variants.length} Variant",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _meta(Icons.image, "${images.length} Image"),
+                    _meta(Icons.layers, "${variants.length} Variant"),
                   ],
                 ),
               ],
             ),
           ),
-
-          // MENU
-          PopupMenuButton(
+          PopupMenuButton<String>(
+            color: Colors.white,
+            surfaceTintColor: Colors.white,
             onSelected: (value) async {
               if (value == "edit") {
                 await Navigator.push(
@@ -284,13 +270,18 @@ class _ProductScreenState extends State<ProductScreen> {
                   ),
                 );
                 _loadAll();
-              } else if (value == "delete") {
+              }
+
+              if (value == "delete") {
+                final confirm = await _confirmDelete();
+                if (!confirm) return;
+
                 await _service.deleteProduct(item.productId);
                 _loadAll();
               }
             },
-            itemBuilder: (_) => [
-              const PopupMenuItem(
+            itemBuilder: (_) => const [
+              PopupMenuItem(
                 value: "edit",
                 child: Row(
                   children: [
@@ -300,7 +291,7 @@ class _ProductScreenState extends State<ProductScreen> {
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: "delete",
                 child: Row(
                   children: [
@@ -311,16 +302,23 @@ class _ProductScreenState extends State<ProductScreen> {
                 ),
               ),
             ],
-            child: const Icon(Icons.more_vert),
           ),
         ],
       ),
     );
   }
 
-  // -------------------------------
-  // BUILD
-  // -------------------------------
+  Widget _meta(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.grey),
+        const SizedBox(width: 4),
+        Text(text, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -331,7 +329,9 @@ class _ProductScreenState extends State<ProductScreen> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.grey[100],
+        surfaceTintColor: Colors.grey[100],
         elevation: 0,
+        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         actions: [_buildAddButton()],
       ),
@@ -341,7 +341,6 @@ class _ProductScreenState extends State<ProductScreen> {
           children: [
             _buildSearchBar(),
             const SizedBox(height: 16),
-
             Expanded(
               child: _isLoading && _products.isEmpty
                   ? const Center(
@@ -351,9 +350,7 @@ class _ProductScreenState extends State<ProductScreen> {
                     )
                   : RefreshIndicator(
                       color: const Color(0xFFED1E28),
-                      onRefresh: () async {
-                        await _loadAll();
-                      },
+                      onRefresh: _loadAll,
                       child: _products.isEmpty
                           ? ListView(
                               physics: const AlwaysScrollableScrollPhysics(),
@@ -363,7 +360,6 @@ class _ProductScreenState extends State<ProductScreen> {
                               ],
                             )
                           : ListView.builder(
-                              physics: const AlwaysScrollableScrollPhysics(),
                               padding: EdgeInsets.only(bottom: bottomPadding),
                               itemCount: _products.length,
                               itemBuilder: (_, i) =>
