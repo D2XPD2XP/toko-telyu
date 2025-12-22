@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:toko_telyu/enums/payment_status.dart';
 import 'package:toko_telyu/models/order_item_model.dart';
 import 'package:toko_telyu/models/order_model.dart';
 import 'package:uuid/uuid.dart';
@@ -104,6 +105,7 @@ class OrderRepository {
     DocumentSnapshot? startAfter,
     String? userId,
     List<String>? statusList,
+    PaymentStatus? paymentStatusFilter,
   }) async {
     Query query = _db
         .collection('order')
@@ -117,6 +119,13 @@ class OrderRepository {
       query = query.where('order_status', whereIn: statusList);
     }
 
+    if (paymentStatusFilter != null) {
+      query = query.where(
+        'payment_status',
+        isEqualTo: paymentStatusFilter.name,
+      );
+    }
+
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);
     }
@@ -125,12 +134,14 @@ class OrderRepository {
 
     final snap = await query.get();
     final orders = snap.docs
-        .map(
-          (doc) => OrderModel.fromFirestore(
-            doc.data() as Map<String, dynamic>,
-            doc.id,
-          ),
-        )
+        .map((doc) {
+          final data = doc.data();
+          if (data is Map<String, dynamic>) {
+            return OrderModel.fromFirestore(data, doc.id);
+          }
+          return null;
+        })
+        .whereType<OrderModel>()
         .toList();
 
     return OrderPageResult(

@@ -83,6 +83,7 @@ class OrderService {
     required int limit,
     DocumentSnapshot? startAfter,
     List<String>? statusList,
+    PaymentStatus? paymentStatusFilter,
   }) async {
     final user = await _userService.loadUser();
     if (user == null) throw Exception('User not logged in');
@@ -92,6 +93,7 @@ class OrderService {
         limit: limit,
         startAfter: startAfter,
         statusList: statusList,
+        paymentStatusFilter: paymentStatusFilter,
       );
     }
 
@@ -100,6 +102,7 @@ class OrderService {
       startAfter: startAfter,
       userId: user.userId,
       statusList: statusList,
+      paymentStatusFilter: paymentStatusFilter,
     );
   }
 
