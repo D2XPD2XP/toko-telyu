@@ -70,16 +70,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     try {
       List<String>? statusList;
-      bool filterProcessing = false;
-      bool filterWaitingPayment = false;
+      PaymentStatus? paymentFilter;
 
       switch (_filter) {
-        case OrderFilter.waitingPayment:
-          filterWaitingPayment = true;
-          break;
         case OrderFilter.pending:
           statusList = ['PENDING'];
-          filterProcessing = true;
+          paymentFilter = PaymentStatus.completed;
+          break;
+        case OrderFilter.waitingPayment:
+          statusList = ['PENDING'];
+          paymentFilter = PaymentStatus.pending;
           break;
         case OrderFilter.readyForPickup:
           statusList = ['READYFORPICKUP'];
@@ -102,19 +102,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
         limit: _limit,
         startAfter: _lastDoc,
         statusList: statusList,
+        paymentStatusFilter: paymentFilter,
       );
 
-      final orders = result.orders.where((o) {
-        if (filterProcessing) {
-          return o.orderStatus == TransactionStatus.pending &&
-              o.paymentStatus == PaymentStatus.completed;
-        }
-        if (filterWaitingPayment) {
-          return o.paymentStatus == PaymentStatus.pending;
-        }
-        return true;
-      }).toList();
+      final orders = result.orders;
 
+      // cache customer name
       for (final o in orders) {
         if (!_customerCache.containsKey(o.customerId)) {
           try {
@@ -128,7 +121,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
       _orders.addAll(orders);
       _lastDoc = result.lastDoc;
-      _hasMore = result.orders.length == _limit;
+      _hasMore = result.orders.length == _limit && orders.isNotEmpty;
     } catch (e, s) {
       debugPrint('Error loading orders page: $e');
       debugPrintStack(stackTrace: s);

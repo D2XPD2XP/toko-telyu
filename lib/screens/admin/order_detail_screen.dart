@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:toko_telyu/models/order_item_model.dart';
 import 'package:toko_telyu/models/order_model.dart';
+import 'package:toko_telyu/models/product_variant.dart';
 import 'package:toko_telyu/services/order_services.dart';
 import 'package:toko_telyu/services/product_services.dart';
 import 'package:toko_telyu/widgets/formatted_price.dart';
@@ -24,6 +25,7 @@ class AdminOrderDetailScreen extends StatefulWidget {
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   final _orderService = OrderService();
   final _productService = ProductService();
+  final Map<String, ProductVariant?> variants = {};
 
   OrderModel? order;
   List<OrderItem> items = [];
@@ -46,6 +48,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
       final data = await _orderService.getOrderWithItems(widget.orderId);
       order = data['order'];
       items = data['items'];
+
       for (final i in items) {
         final p = await _productService.getProduct(i.productId);
         final imgs = await _productService.getImages(i.productId);
@@ -56,6 +59,12 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
               ? imgs.first.imageUrl
               : 'assets/placeholder.png',
         };
+
+        final variant = await _productService.getVariantById(
+          i.productId,
+          i.variantId,
+        );
+        variants[i.orderItemId] = variant;
       }
     } catch (_) {
       error = true;
@@ -161,7 +170,10 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
 
   Widget _productRow(OrderItem item) {
     final p = products[item.productId]!;
-    final price = double.parse(p['price']!);
+    final basePrice = double.parse(p['price']!);
+    final variant = variants[item.orderItemId];
+    final variantName = variant?.optionName ?? '';
+    final totalPrice = basePrice + (variant?.additionalPrice ?? 0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -177,11 +189,16 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   p['name']!,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
+                if (variantName.isNotEmpty)
+                  Text(
+                    'Variant: $variantName',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 Row(
                   children: [
                     Text('${item.amount} x '),
                     FormattedPrice(
-                      price: price,
+                      price: totalPrice,
                       size: 12,
                       fontWeight: FontWeight.w400,
                     ),
