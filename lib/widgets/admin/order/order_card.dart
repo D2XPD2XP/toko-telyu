@@ -157,12 +157,9 @@ class _OrderCardState extends State<OrderCard> {
 
     switch (order.orderStatus) {
       case TransactionStatus.pending:
-        return order.shippingMethod == ShippingMethod.delivery
-            ? TransactionStatus.preparingForDelivery
-            : TransactionStatus.readyForPickup;
-
-      case TransactionStatus.preparingForDelivery:
-        return TransactionStatus.outForDelivery;
+        return order.shippingMethod == ShippingMethod.pickup
+            ? TransactionStatus.readyForPickup
+            : TransactionStatus.outForDelivery;
 
       case TransactionStatus.readyForPickup:
       case TransactionStatus.outForDelivery:
@@ -175,7 +172,7 @@ class _OrderCardState extends State<OrderCard> {
 
   String _label(TransactionStatus status) {
     switch (status) {
-      case TransactionStatus.preparingForDelivery:
+      case TransactionStatus.pending:
         return "Preparing for Delivery";
       case TransactionStatus.readyForPickup:
         return "Ready for Pickup";
@@ -196,8 +193,6 @@ class _OrderCardState extends State<OrderCard> {
     switch (order.orderStatus) {
       case TransactionStatus.pending:
         return "Processing Order";
-      case TransactionStatus.preparingForDelivery:
-        return "Preparing for Delivery";
       case TransactionStatus.readyForPickup:
         return "Ready for Pickup";
       case TransactionStatus.outForDelivery:

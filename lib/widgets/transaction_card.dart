@@ -48,13 +48,6 @@ class TransactionCard extends StatelessWidget {
       switch (status) {
         case TransactionStatus.pending:
           statusColor = const Color(0xFF3F51B5);
-          statusText = "Order Received";
-          buttonText = "View Details";
-          buttonAction = null;
-          break;
-
-        case TransactionStatus.preparingForDelivery:
-          statusColor = const Color(0xFF5E35B1);
           statusText = "Preparing Order";
           buttonText = "View Details";
           buttonAction = null;

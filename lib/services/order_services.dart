@@ -182,10 +182,8 @@ class OrderService {
     switch (order.orderStatus) {
       case TransactionStatus.pending:
         return order.shippingMethod == ShippingMethod.delivery
-            ? TransactionStatus.preparingForDelivery
+            ? TransactionStatus.outForDelivery
             : TransactionStatus.readyForPickup;
-      case TransactionStatus.preparingForDelivery:
-        return TransactionStatus.outForDelivery;
       case TransactionStatus.readyForPickup:
       case TransactionStatus.outForDelivery:
         return TransactionStatus.completed;

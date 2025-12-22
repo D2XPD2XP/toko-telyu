@@ -71,11 +71,9 @@ class _OrderActionButtonState extends State<OrderActionButton> {
   TransactionStatus? _nextStatus(OrderModel order) {
     return switch (order.orderStatus) {
       TransactionStatus.pending =>
-        order.shippingMethod == ShippingMethod.delivery
-            ? TransactionStatus.preparingForDelivery
-            : TransactionStatus.readyForPickup,
-      TransactionStatus.preparingForDelivery =>
-        TransactionStatus.outForDelivery,
+        order.shippingMethod == ShippingMethod.pickup
+            ? TransactionStatus.readyForPickup
+            : TransactionStatus.outForDelivery,
       TransactionStatus.readyForPickup ||
       TransactionStatus.outForDelivery => TransactionStatus.completed,
       _ => null,
@@ -84,7 +82,7 @@ class _OrderActionButtonState extends State<OrderActionButton> {
 
   String _label(TransactionStatus status) {
     return switch (status) {
-      TransactionStatus.preparingForDelivery => 'Preparing for Delivery',
+      TransactionStatus.pending => 'Preparing for Delivery',
       TransactionStatus.readyForPickup => 'Ready for Pickup',
       TransactionStatus.outForDelivery => 'Out for Delivery',
       TransactionStatus.completed => 'Mark as Completed',

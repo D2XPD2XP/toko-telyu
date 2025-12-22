@@ -33,15 +33,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     if (_order.paymentStatus == PaymentStatus.pending) return null;
     switch (_order.orderStatus) {
       case TransactionStatus.pending:
-        if (_order.shippingMethod == ShippingMethod.delivery) {
-          return TransactionStatus.preparingForDelivery;
-        } else if (_order.shippingMethod == ShippingMethod.pickup) {
-          return TransactionStatus.readyForPickup;
-        } else if (_order.shippingMethod == ShippingMethod.directDelivery) {
-          return TransactionStatus.outForDelivery;
-        }
-        return null;
-      case TransactionStatus.preparingForDelivery:
+        return TransactionStatus.pending;
       case TransactionStatus.outForDelivery:
         return TransactionStatus.completed;
       case TransactionStatus.readyForPickup:
@@ -58,8 +50,6 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     switch (status) {
       case TransactionStatus.pending:
         return "Processing Order";
-      case TransactionStatus.preparingForDelivery:
-        return "Preparing for Delivery";
       case TransactionStatus.readyForPickup:
         return "Ready for Pickup";
       case TransactionStatus.outForDelivery:

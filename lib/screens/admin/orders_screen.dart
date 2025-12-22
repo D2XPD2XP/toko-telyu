@@ -12,7 +12,6 @@ enum OrderFilter {
   all,
   waitingPayment,
   pending,
-  preparingForDelivery,
   readyForPickup,
   outForDelivery,
   completed,
@@ -77,9 +76,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
         case OrderFilter.pending:
           return o.paymentStatus == PaymentStatus.completed &&
               o.orderStatus == TransactionStatus.pending;
-
-        case OrderFilter.preparingForDelivery:
-          return o.orderStatus == TransactionStatus.preparingForDelivery;
 
         case OrderFilter.readyForPickup:
           return o.orderStatus == TransactionStatus.readyForPickup;
