@@ -73,8 +73,6 @@ class _OrderFilterWidgetState extends State<OrderFilterWidget> {
         return 'Waiting Payment';
       case OrderFilter.pending:
         return 'Processing';
-      case OrderFilter.preparingForDelivery:
-        return 'Preparing';
       case OrderFilter.readyForPickup:
         return 'Pickup Ready';
       case OrderFilter.outForDelivery:

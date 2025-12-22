@@ -39,6 +39,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
   // Filters
   TransactionStatus? _selectedStatus;
   String? _selectedDateRange;
+  bool get _isDateFilterActive =>
+      _selectedDateRange != null && _selectedDateRange != 'All Dates';
 
   final List<String> _dateRangeOptions = [
     'All Dates',
@@ -95,12 +97,18 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   o.orderDate.month == now.month &&
                   o.orderDate.day == now.day;
             case 'This Week':
-              final weekStart = now.subtract(Duration(days: now.weekday - 1));
-              final weekEnd = weekStart.add(const Duration(days: 6));
-              return o.orderDate.isAfter(
-                    weekStart.subtract(const Duration(seconds: 1)),
-                  ) &&
-                  o.orderDate.isBefore(weekEnd.add(const Duration(days: 1)));
+              final nowLocal = DateTime.now();
+
+              final weekStart = DateTime(
+                nowLocal.year,
+                nowLocal.month,
+                nowLocal.day - (nowLocal.weekday - 1),
+              );
+
+              final weekEnd = weekStart.add(const Duration(days: 7));
+
+              return o.orderDate.isAfter(weekStart) &&
+                  o.orderDate.isBefore(weekEnd);
             case 'This Month':
               return o.orderDate.year == now.year &&
                   o.orderDate.month == now.month;
@@ -121,7 +129,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
       setState(() {
         _orders.addAll(filteredOrders);
         _lastDoc = result.lastDoc;
-        _hasMore = result.orders.length == _limit;
+
+        if (_isDateFilterActive) {
+          _hasMore = filteredOrders.length == _limit;
+        } else {
+          _hasMore = result.orders.length == _limit;
+        }
+
         _loading = false;
         _loadingMore = false;
       });
@@ -192,8 +206,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
     switch (status) {
       case TransactionStatus.pending:
         return "Order Received";
-      case TransactionStatus.preparingForDelivery:
-        return "Preparing Order";
       case TransactionStatus.readyForPickup:
         return "Ready for Pickup";
       case TransactionStatus.outForDelivery:

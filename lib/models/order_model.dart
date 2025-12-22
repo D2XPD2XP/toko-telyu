@@ -8,8 +8,6 @@ TransactionStatus _parseTransactionStatus(String? status) {
   switch (status?.toUpperCase()) {
     case "PENDING":
       return TransactionStatus.pending;
-    case "PREPARINGFORDELIVERY":
-      return TransactionStatus.preparingForDelivery;
     case "READYFORPICKUP":
       return TransactionStatus.readyForPickup;
     case "OUTFORDELIVERY":
